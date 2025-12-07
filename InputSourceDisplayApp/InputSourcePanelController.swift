@@ -11,12 +11,13 @@ import Combine
 
 final class InputSourcePanelController {
     private let panel: NSPanel
-    private let manager: InputSourceManager
+    private let manager: InputSourceObserver
+    private let panelContentCoordinator = PanelContentCoordinator()
     private let hostingView: NSHostingView<PanelContentView>
     private var cancellables = Set<AnyCancellable>()
     
-    init(inputSourceManager: InputSourceManager) {
-        self.manager = inputSourceManager
+    init(inputSourceObserver: InputSourceObserver) {
+        self.manager = inputSourceObserver
 
         let rect = NSRect(x: 200, y: 200, width: 0, height: 0)
         panel = NSPanel(
@@ -36,7 +37,10 @@ final class InputSourcePanelController {
         panel.level = .floating
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
 
-        hostingView = NSHostingView(rootView: PanelContentView(manager: manager))
+        hostingView = NSHostingView(rootView: PanelContentView(
+            coordinator: panelContentCoordinator,
+            inputSourceObserver: manager
+        ))
         hostingView.translatesAutoresizingMaskIntoConstraints = false
 
         let contentView = NSView()
@@ -55,7 +59,10 @@ final class InputSourcePanelController {
         ])
 
         resizePanel()
-
+        bind()
+    }
+    
+    private func bind() {
         // currentNameの変更を監視してパネルをリサイズ
         manager.$currentName
             .dropFirst() // 初回の値はスキップ
@@ -63,6 +70,20 @@ final class InputSourcePanelController {
                 self?.resizePanel()
             }
             .store(in: &cancellables)
+        
+        panelContentCoordinator
+            .inputTrigger
+            .sink { [weak self] input in
+                self?.handlePanelInput(input)
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func handlePanelInput(_ input: PanelContentCoordinator.Input) {
+        switch input {
+        case .hide:
+            hide()
+        }
     }
 
     private func resizePanel() {

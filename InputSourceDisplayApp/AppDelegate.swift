@@ -9,11 +9,11 @@ import AppKit
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
-    private let inputSourceManager = InputSourceManager()
+    private let inputSourceObserver = InputSourceObserver()
     private var panelController: InputSourcePanelController!
     
     func applicationDidFinishLaunching(_ notification: Notification) {
-        panelController = InputSourcePanelController(inputSourceManager: inputSourceManager)
+        panelController = InputSourcePanelController(inputSourceObserver: inputSourceObserver)
         setupStatusItem()
     }
     

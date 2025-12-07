@@ -1,17 +1,16 @@
 //
-//  InputSourceManager.swift
+//  InputSourceObserver.swift
 //  InputSourceDisplayApp
 //
 //  Created by kajitani kento on 2025/12/06.
 //
-
 
 import SwiftUI
 import AppKit
 import Carbon
 import Combine
 
-final class InputSourceManager: ObservableObject {
+final class InputSourceObserver: ObservableObject {
     @Published var currentName: String = "Unknown"
     
     private var observer: (any NSObjectProtocol)?
@@ -50,5 +49,18 @@ final class InputSourceManager: ObservableObject {
         ) { [weak self] _ in
             self?.updateCurrentName()
         }
+    }
+}
+
+enum InputSource {
+    case abc
+    case hiragana
+
+    static func of(_ name: String) -> Self {
+        // TODO: 仮実装
+        if name.lowercased().contains("us") || name.contains("英数") || name.lowercased().contains("abc") {
+            return .abc
+        }
+        return .hiragana
     }
 }
