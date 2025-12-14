@@ -6,14 +6,20 @@
 //
 
 import AppKit
+import ComposableArchitecture
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    let store = Store(initialState: ActorPanel.State()) { ActorPanel() }
+    
     private var statusItem: NSStatusItem!
     private let inputSourceObserver = InputSourceObserver()
     private var panelController: InputSourcePanelController!
     
     func applicationDidFinishLaunching(_ notification: Notification) {
-        panelController = InputSourcePanelController(inputSourceObserver: inputSourceObserver)
+        panelController = InputSourcePanelController(
+            store: store,
+            inputSourceObserver: inputSourceObserver
+        )
         setupStatusItem()
     }
     

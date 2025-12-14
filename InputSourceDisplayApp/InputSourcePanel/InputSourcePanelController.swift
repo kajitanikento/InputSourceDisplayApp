@@ -8,9 +8,12 @@
 import AppKit
 import SwiftUI
 import Combine
+import ComposableArchitecture
 
 @MainActor
 final class InputSourcePanelController {
+    private let store: StoreOf<ActorPanel>
+    
     private let panel: NSPanel
     private let manager: InputSourceObserver
     private let panelContentCoordinator = PanelContentCoordinator()
@@ -19,9 +22,15 @@ final class InputSourcePanelController {
     private var lastMouseLocation: (CGPoint, Date)?
     private var shouldMovePanel: Bool = true
     
+    private var observeMouseLocationTimer: Timer?
+    
     private var cancellables = Set<AnyCancellable>()
     
-    init(inputSourceObserver: InputSourceObserver) {
+    init(
+        store: StoreOf<ActorPanel>,
+        inputSourceObserver: InputSourceObserver
+    ) {
+        self.store = store
         self.manager = inputSourceObserver
 
         let rect = NSRect(x: 200, y: 200, width: 0, height: 0)
@@ -65,7 +74,7 @@ final class InputSourcePanelController {
 
         resizePanel()
         bind()
-        observe()
+        
     }
     
     private func bind() {
@@ -83,16 +92,12 @@ final class InputSourcePanelController {
                 self?.handlePanelInput(input)
             }
             .store(in: &cancellables)
-    }
-    
-    private func observe() {
+        
         observeMouseLocation()
     }
-    
-    private var timer: Timer?
-    
+        
     private func observeMouseLocation() {
-        timer = .scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+        observeMouseLocationTimer = .scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             guard let self else { return }
             Task { @MainActor in
                 self.handleMouseLocationTimer()
