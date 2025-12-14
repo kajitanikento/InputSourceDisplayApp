@@ -1,5 +1,5 @@
 //
-//  PanelContentView.swift
+//  ActorPanelView.swift
 //  InputSourceDisplayApp
 //
 //  Created by kajitani kento on 2025/12/06.
@@ -8,7 +8,7 @@
 import SwiftUI
 import ComposableArchitecture
 
-struct PanelContentView: View {
+struct ActorPanelView: View {
     static let size = CGSize(width: 120, height: 170)
     
     @Bindable var store: StoreOf<ActorPanel>
@@ -148,7 +148,7 @@ struct PanelContentView: View {
 }
 
 #Preview {
-    PanelContentView(
+    ActorPanelView(
         store: .init(initialState: .init()) { ActorPanel() },
         inputSourceObserver: .init()
     )

@@ -30,7 +30,6 @@ struct ActorPanel {
         Reduce { state, action in
             switch action {
             case .onAppear:
-                print("🍎 (｀・ω・´) < onAppear!")
                 return .none
                 
             case let .toggleHidden(isHide):

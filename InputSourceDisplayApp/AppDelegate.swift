@@ -18,10 +18,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     
     private var statusItem: NSStatusItem!
     private let inputSourceObserver = InputSourceObserver()
-    private var panelController: InputSourcePanelController!
+    private var panelController: ActorPanelController!
     
     func applicationDidFinishLaunching(_ notification: Notification) {
-        panelController = InputSourcePanelController(
+        panelController = ActorPanelController(
             store: store,
             inputSourceObserver: inputSourceObserver
         )

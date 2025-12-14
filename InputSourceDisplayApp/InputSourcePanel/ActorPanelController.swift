@@ -1,5 +1,5 @@
 //
-//  InputSourcePanelController.swift
+//  ActorPanelController.swift
 //  InputSourceDisplayApp
 //
 //  Created by kajitani kento on 2025/12/06.
@@ -11,13 +11,13 @@ import Combine
 import ComposableArchitecture
 
 @MainActor
-final class InputSourcePanelController {
+final class ActorPanelController {
     private let store: StoreOf<ActorPanel>
     
     private let panel = NSPanel()
     private let inputSourceObserver: InputSourceObserver
     
-    private var hostingView: NSHostingView<PanelContentView>!
+    private var hostingView: NSHostingView<ActorPanelView>!
     
     private var lastMouseLocation: (CGPoint, Date)?
     
@@ -51,7 +51,7 @@ final class InputSourcePanelController {
         panel.level = .floating
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
 
-        hostingView = NSHostingView(rootView: PanelContentView(
+        hostingView = NSHostingView(rootView: ActorPanelView(
             store: store,
             inputSourceObserver: inputSourceObserver
         ))
@@ -128,10 +128,10 @@ final class InputSourcePanelController {
     
     private func movePanel(to location: CGPoint) {
         let newLocation = CGPoint(
-            x: location.x - PanelContentView.size.width - 40,
-            y: location.y - PanelContentView.size.height / 2
+            x: location.x - ActorPanelView.size.width - 40,
+            y: location.y - ActorPanelView.size.height / 2
         )
-        let newFrame = CGRect(origin: newLocation, size: PanelContentView.size)
+        let newFrame = CGRect(origin: newLocation, size: ActorPanelView.size)
         
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 2
@@ -142,7 +142,7 @@ final class InputSourcePanelController {
     }
 
     private func resizePanel() {
-        let newFrame = NSRect(origin: panel.frame.origin, size: PanelContentView.size)
+        let newFrame = NSRect(origin: panel.frame.origin, size: ActorPanelView.size)
 
         panel.setFrame(newFrame, display: true)
     }
