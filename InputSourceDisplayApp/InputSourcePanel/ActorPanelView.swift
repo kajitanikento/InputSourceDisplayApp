@@ -13,14 +13,8 @@ struct ActorPanelView: View {
     
     @Bindable var store: StoreOf<ActorPanel>
     
-    @ObservedObject var inputSourceObserver: InputSourceObserver
-    
     @State var isLongPress = false
     @State var hoverAnimationProgress: Double = 0
-    
-    var currentInputSource: InputSource {
-        .of(inputSourceObserver.currentName)
-    }
     
     var body: some View {
         content
@@ -65,6 +59,9 @@ struct ActorPanelView: View {
             )
             .onAppear {
                 store.send(.onAppear)
+            }
+            .onDisappear {
+                store.send(.onDisappear)
             }
     }
     
@@ -126,21 +123,21 @@ struct ActorPanelView: View {
     }
     
     private var shortLabel: String {
-        switch currentInputSource {
+        switch store.currentInputSource {
         case .abc: "A"
         case .hiragana: "あ"
         }
     }
     
     private var textColor: Color {
-        switch currentInputSource {
+        switch store.currentInputSource {
         case .abc: .white
         case .hiragana: .white
         }
     }
     
     private var backgroundColor: Color {
-        switch currentInputSource {
+        switch store.currentInputSource {
         case .abc: .blue
         case .hiragana: .red
         }
@@ -149,8 +146,7 @@ struct ActorPanelView: View {
 
 #Preview {
     ActorPanelView(
-        store: .init(initialState: .init()) { ActorPanel() },
-        inputSourceObserver: .init()
+        store: .init(initialState: .init()) { ActorPanel() }
     )
 }
 

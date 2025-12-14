@@ -15,26 +15,18 @@ final class ActorPanelController {
     private let store: StoreOf<ActorPanel>
     
     private let panel = NSPanel()
-    private let inputSourceObserver: InputSourceObserver
-    
     private var hostingView: NSHostingView<ActorPanelView>!
     
     private var lastMouseLocation: (CGPoint, Date)?
     
     private var observeMouseLocationTimer: Timer?
-    
     private var observations: [ObserveToken] = []
-    private var cancellables = Set<AnyCancellable>()
     
     init(
-        store: StoreOf<ActorPanel>,
-        inputSourceObserver: InputSourceObserver
+        store: StoreOf<ActorPanel>
     ) {
         self.store = store
-        self.inputSourceObserver = inputSourceObserver
         setup()
-
-        resizePanel()
         bind()
     }
     
@@ -52,8 +44,7 @@ final class ActorPanelController {
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
 
         hostingView = NSHostingView(rootView: ActorPanelView(
-            store: store,
-            inputSourceObserver: inputSourceObserver
+            store: store
         ))
         hostingView.translatesAutoresizingMaskIntoConstraints = false
 
@@ -69,11 +60,13 @@ final class ActorPanelController {
             hostingView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
             hostingView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
         ])
+        
+        let newFrame = NSRect(origin: panel.frame.origin, size: ActorPanelView.size)
+        panel.setFrame(newFrame, display: true)
     }
     
     private func bind() {
         observeStore()
-        observeInputSource()
         observeMouseLocation()
     }
     
@@ -86,15 +79,6 @@ final class ActorPanelController {
                 show()
             }
         })
-    }
-    
-    private func observeInputSource() {
-        inputSourceObserver.$currentName
-            .dropFirst() // 初回の値はスキップ
-            .sink { [weak self] _ in
-                self?.resizePanel()
-            }
-            .store(in: &cancellables)
     }
     
     private func observeMouseLocation() {
@@ -139,12 +123,6 @@ final class ActorPanelController {
             
             self.panel.animator().setFrame(newFrame, display: true)
         }
-    }
-
-    private func resizePanel() {
-        let newFrame = NSRect(origin: panel.frame.origin, size: ActorPanelView.size)
-
-        panel.setFrame(newFrame, display: true)
     }
     
     private func show() {
