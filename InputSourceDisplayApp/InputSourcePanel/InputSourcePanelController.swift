@@ -11,10 +11,11 @@ import Combine
 
 @MainActor
 final class InputSourcePanelController {
-    private let panel: NSPanel
-    private let manager: InputSourceObserver
+    private let panel = NSPanel()
+    private let inputSourceObserver: InputSourceObserver
     private let panelContentCoordinator = PanelContentCoordinator()
-    private let hostingView: NSHostingView<PanelContentView>
+    
+    private var hostingView: NSHostingView<PanelContentView>!
     
     private var lastMouseLocation: (CGPoint, Date)?
     private var shouldMovePanel: Bool = true
@@ -22,16 +23,17 @@ final class InputSourcePanelController {
     private var cancellables = Set<AnyCancellable>()
     
     init(inputSourceObserver: InputSourceObserver) {
-        self.manager = inputSourceObserver
+        self.inputSourceObserver = inputSourceObserver
+        setup()
 
-        let rect = NSRect(x: 200, y: 200, width: 0, height: 0)
-        panel = NSPanel(
-            contentRect: rect,
-            styleMask: [.borderless],
-            backing: .buffered,
-            defer: false
-        )
-
+        resizePanel()
+        bind()
+        observe()
+    }
+    
+    private func setup() {
+        panel.styleMask = .borderless
+        panel.backingType = .buffered
         panel.isMovableByWindowBackground = true
         panel.isReleasedWhenClosed = false
         panel.hidesOnDeactivate = false
@@ -44,7 +46,7 @@ final class InputSourcePanelController {
 
         hostingView = NSHostingView(rootView: PanelContentView(
             coordinator: panelContentCoordinator,
-            inputSourceObserver: manager
+            inputSourceObserver: inputSourceObserver
         ))
         hostingView.translatesAutoresizingMaskIntoConstraints = false
 
@@ -57,20 +59,14 @@ final class InputSourcePanelController {
 
         // hostingViewのサイズに合わせてcontentViewとpanelのサイズを設定
         NSLayoutConstraint.activate([
-            // hostingView.topAnchor.constraint(equalTo: contentView.topAnchor),
             hostingView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
             hostingView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            // hostingView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor)
         ])
-
-        resizePanel()
-        bind()
-        observe()
     }
     
     private func bind() {
         // currentNameの変更を監視してパネルをリサイズ
-        manager.$currentName
+        inputSourceObserver.$currentName
             .dropFirst() // 初回の値はスキップ
             .sink { [weak self] _ in
                 self?.resizePanel()
