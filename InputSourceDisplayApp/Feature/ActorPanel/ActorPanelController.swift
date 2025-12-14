@@ -17,9 +17,6 @@ final class ActorPanelController {
     private let panel = NSPanel()
     private var hostingView: NSHostingView<ActorPanelView>!
     
-    private var lastMouseLocation: (CGPoint, Date)?
-    
-    private var observeMouseLocationTimer: Timer?
     private var observations: [ObserveToken] = []
     
     init(
@@ -82,33 +79,15 @@ final class ActorPanelController {
     }
     
     private func observeMouseLocation() {
-        observeMouseLocationTimer = .scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            guard let self else { return }
-            Task { @MainActor in
-                self.handleMouseLocationTimer()
-            }
-        }
+        observations.append(observe { [weak self] in
+            guard let self,
+                  store.movingPanelPosition != .zero
+            else { return }
+            movePanel(to: store.movingPanelPosition)
+        })
     }
     
-    private func handleMouseLocationTimer() {
-        guard store.state.withMove else { return }
-        
-        let currentMouseLocation = NSEvent.mouseLocation
-        
-        guard let beforeMouseLocation = lastMouseLocation else {
-            self.lastMouseLocation = (currentMouseLocation, .now)
-            return
-        }
-        if beforeMouseLocation.0 != currentMouseLocation {
-            self.lastMouseLocation = (currentMouseLocation, .now)
-            return
-        }
-        // マウスポインタが一定時間同じ場所で止まっていたら寄っていく
-        if Date().timeIntervalSince(beforeMouseLocation.1) > 30 {
-            movePanel(to: currentMouseLocation)
-            self.lastMouseLocation = (currentMouseLocation, .now)
-        }
-    }
+    
     
     private func movePanel(to location: CGPoint) {
         let newLocation = CGPoint(
