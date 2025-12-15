@@ -19,6 +19,19 @@ struct ActorPanelView: View {
     var body: some View {
         content
             .contextMenu {
+                if store.pomodoroTimer.isTimerRunning {
+                    Button("Stop timer") {
+                        store.send(.pomodoroTimer(.stopTimer))
+                    }
+                } else {
+                    Button("Start timer(25m)") {
+                        store.send(.pomodoroTimer(.startTimer(endDate: .now.addingTimeInterval(25 * 60))))
+                    }
+                    Button("Start timer(5m)") {
+                        store.send(.pomodoroTimer(.startTimer(endDate: .now.addingTimeInterval(5 * 60))))
+                    }
+                }
+                
                 Button("\(store.state.cat.withAnimation ? "Stop" : "Start") animation") {
                     store.send(.toggleWithAnimation)
                 }
@@ -30,6 +43,10 @@ struct ActorPanelView: View {
                 }
             }
             .onHover { isHover in
+                if store.pomodoroTimer.isComplete {
+                    return
+                }
+                
                 let duration = 0.15
                 withAnimation(isHover ? .easeIn(duration: duration) : .easeOut(duration: duration)) {
                     hoverAnimationProgress = isHover ? 1 : 0
@@ -40,13 +57,21 @@ struct ActorPanelView: View {
                     isLongPress = false
                 }
             }
+            .onTapGesture {
+                if store.pomodoroTimer.isComplete {
+                    store.send(.pomodoroTimer(.stopTimer))
+                }
+            }
             .onLongPressGesture(
                 minimumDuration: 1,
                 perform: { /** no operations */ },
                 onPressingChanged: { isPress in
-                    if isPress {
-                        isLongPress = true
+                    guard isPress,
+                          !store.pomodoroTimer.isComplete else {
+                        return
                     }
+                    
+                    isLongPress = true
                 }
             )
             .gesture(
@@ -76,12 +101,20 @@ struct ActorPanelView: View {
         ZStack {
             inputSourceLabel
             cat
+            pomodoroTimer
         }
         .shadow(color: .black.opacity(0.2),radius: 4, x: 2, y: 2)
         .opacity(opacity)
     }
     
     // MARK: Subviews
+    
+    private var pomodoroTimer: some View {
+        PomodoroTimerView(
+            store: store.scope(state: \.pomodoroTimer, action: \.pomodoroTimer)
+        )
+        .opacity(isLongPress ? 0 : 1)
+    }
     
     private var cat: some View {
         CatFrameForwardView(
@@ -91,16 +124,15 @@ struct ActorPanelView: View {
     
     @ViewBuilder
     private var inputSourceLabel: some View {
-        if !isLongPress {
-            VStack(spacing: 0) {
-                Spacer(minLength: 0)
-                
-                _inputSourceLabel
-                    .padding(.bottom, 14)
-                    .padding(.trailing, 4)
-            }
-            .frame(height: Self.size.height)
+        VStack(spacing: 0) {
+            Spacer(minLength: 0)
+            
+            _inputSourceLabel
+                .padding(.bottom, 14)
+                .padding(.trailing, 4)
         }
+        .frame(height: Self.size.height)
+        .opacity(isLongPress ? 0 : 1)
     }
     
     private var _inputSourceLabel: some View {

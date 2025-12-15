@@ -12,7 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let store = Store(initialState: ActorPanel.State()) {
         ActorPanel()
         #if DEBUG
-            ._printChanges()
+            // ._printChanges()
         #endif
     }
     

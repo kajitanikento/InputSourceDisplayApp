@@ -20,6 +20,7 @@ struct ActorPanel {
         var isHide: Bool = false
         var withMove: Bool = true
         
+        var pomodoroTimer: PomodoroTimer.State = .init()
         var cat: Cat.State = .init()
     }
     
@@ -44,11 +45,13 @@ struct ActorPanel {
         case changeInputSource(InputSource)
         
         // Child reducer
+        case pomodoroTimer(PomodoroTimer.Action)
         case cat(Cat.Action)
     }
     
     @Dependency(\.inputSource) var inputSource
     @Dependency(\.continuousClock) var clock
+    @Dependency(\.date) var date
     
     var body: some Reducer<State, Action> {
         Reduce { state, action in
@@ -78,25 +81,7 @@ struct ActorPanel {
                 }
                 
             case .mouseLocationTimerTicked:
-                guard state.withMove else {
-                    return .none
-                }
-                
-                let currentMouseLocation = NSEvent.mouseLocation
-                guard let beforeMouseLocation = state.lastMouseLocation else {
-                    return .send(.updateLastMouseLocation(currentMouseLocation, .now))
-                }
-                if beforeMouseLocation.0 != currentMouseLocation {
-                    return .send(.updateLastMouseLocation(currentMouseLocation, .now))
-                }
-                // マウスポインタが一定時間同じ場所で止まっていたら寄っていく
-                if Date().timeIntervalSince(beforeMouseLocation.1) > 30 {
-                    return .run { send in
-                        await send(.updateMovingPanelPosition(currentMouseLocation))
-                        await send(.updateLastMouseLocation(currentMouseLocation, .now))
-                    }
-                }
-                return .none
+                return handleMouseLocationTimerTicked(state: &state)
                 
             case let .updateLastMouseLocation(location, date):
                 state.lastMouseLocation = (location, date)
@@ -125,15 +110,49 @@ struct ActorPanel {
                 state.currentInputSource = source
                 return .none
                 
+            case let .pomodoroTimer(action):
+                switch action {
+                case .completeTimer:
+                    // TODO: 動き回る
+                    break
+                default:
+                    break
+                }
+                return .none
+                
             case .cat:
                 return .none
             }
+        }
+        
+        Scope(state: \.pomodoroTimer, action: \.pomodoroTimer) {
+            PomodoroTimer()
         }
         
         Scope(state: \.cat, action: \.cat) {
             Cat()
         }
     }
+    
+    private func handleMouseLocationTimerTicked(state: inout State) -> Effect<ActorPanel.Action> {
+        guard state.withMove else {
+            return .none
+        }
+        
+        let currentMouseLocation = NSEvent.mouseLocation
+        guard let beforeMouseLocation = state.lastMouseLocation else {
+            return .send(.updateLastMouseLocation(currentMouseLocation, date.now))
+        }
+        if beforeMouseLocation.0 != currentMouseLocation {
+            return .send(.updateLastMouseLocation(currentMouseLocation, date.now))
+        }
+        // マウスポインタが一定時間同じ場所で止まっていたら寄っていく
+        if date.now.timeIntervalSince(beforeMouseLocation.1) > 30 {
+            return .run { send in
+                await send(.updateMovingPanelPosition(currentMouseLocation))
+                await send(.updateLastMouseLocation(currentMouseLocation, date.now))
+            }
+        }
+        return .none
+    }
 }
-
-
