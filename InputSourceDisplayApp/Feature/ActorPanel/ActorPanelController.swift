@@ -81,6 +81,7 @@ final class ActorPanelController {
             guard let self,
                   store.movingPanelPosition.position != .zero
             else { return }
+            _ = store.movingPanelPosition
             movePanel(to: store.movingPanelPosition.position, duration: store.movingPanelPosition.animationDuration)
         })
     }
