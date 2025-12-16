@@ -93,8 +93,7 @@ final class ActorPanelController {
     }
     
     private func updatePanelSize() {
-        let newFrame = NSRect(origin: panel.frame.origin, size: store.panelSize)
-        panel.setFrame(newFrame, display: true)
+        panel.animator().setContentSize(store.panelSize)
     }
     
     private func movePanel(
