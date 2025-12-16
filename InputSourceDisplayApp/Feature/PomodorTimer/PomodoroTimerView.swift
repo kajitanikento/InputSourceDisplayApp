@@ -9,6 +9,7 @@ import SwiftUI
 import ComposableArchitecture
 
 struct PomodoroTimerView: View {
+    static let size: CGSize = .init(width: 100, height: 36)
     
     @Bindable var store: StoreOf<PomodoroTimer>
     
@@ -16,8 +17,9 @@ struct PomodoroTimerView: View {
         if let timerText {
             timerText
                 .font(.system(size: 20, weight: .bold))
-                .padding(.vertical, 8)
-                .padding(.horizontal, 16)
+//                .padding(.vertical, 8)
+//                .padding(.horizontal, 16)
+                .frame(width: Self.size.width, height: Self.size.height)
                 .foregroundStyle(.white)
                 .background(.gray)
                 .clipShape(RoundedRectangle(cornerRadius: 40))

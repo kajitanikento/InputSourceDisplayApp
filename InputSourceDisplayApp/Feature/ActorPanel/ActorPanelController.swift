@@ -58,8 +58,7 @@ final class ActorPanelController {
             hostingView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
         ])
         
-        let newFrame = NSRect(origin: panel.frame.origin, size: ActorPanelView.size)
-        panel.setFrame(newFrame, display: true)
+        updatePanelSize()
     }
     
     private func bind() {
@@ -76,6 +75,12 @@ final class ActorPanelController {
                 show()
             }
         })
+        
+        observations.append(observe { [weak self] in
+            guard let self else { return }
+            _ = store.panelSize
+            updatePanelSize()
+        })
     }
     
     private func observeMouseLocation() {
@@ -87,17 +92,20 @@ final class ActorPanelController {
         })
     }
     
-    
+    private func updatePanelSize() {
+        let newFrame = NSRect(origin: panel.frame.origin, size: store.panelSize)
+        panel.setFrame(newFrame, display: true)
+    }
     
     private func movePanel(
         to location: CGPoint,
         duration: Double
     ) {
         let newLocation = CGPoint(
-            x: location.x - ActorPanelView.size.width - 40,
-            y: location.y - ActorPanelView.size.height / 2
+            x: location.x - store.panelSize.width - 40,
+            y: location.y - store.panelSize.height / 2
         )
-        let newFrame = CGRect(origin: newLocation, size: ActorPanelView.size)
+        let newFrame = CGRect(origin: newLocation, size: store.panelSize)
         
         NSAnimationContext.runAnimationGroup { context in
             context.duration = duration
