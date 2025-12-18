@@ -40,7 +40,7 @@ struct ActorPanel {
         case mouseLocationTimerTicked
         case updateLastMouseLocation(CGPoint, Date)
         case updateMovingPanelPosition(MovePanelInfo)
-        case onPressHotKey
+        case onPressHotKey(HotKey)
         
         // View inputs
         case toggleHidden(to: Bool? = nil)
@@ -88,8 +88,8 @@ struct ActorPanel {
                 
             case .startObserveHotKey:
                 return .run { send in
-                    for await _ in await self.hotKeyObserver.stream {
-                        await send(.onPressHotKey)
+                    for await hotKey in await self.hotKeyObserver.stream {
+                        await send(.onPressHotKey(hotKey))
                     }
                 }
                 
@@ -107,11 +107,18 @@ struct ActorPanel {
                 state.lastMouseLocation = (location, date)
                 return .none
                 
-            case .onPressHotKey:
-                if state.isHide {
-                    state.isHide = false
+            case let .onPressHotKey(hotKey):
+                switch hotKey {
+                case .callCat:
+                    if state.isHide {
+                        state.isHide = false
+                    }
+                    state.movingPanelPosition = .init(position: NSEvent.mouseLocation, animationDuration: 0.3)
+                case .toggleHidden:
+                    state.isHide.toggle()
+                    
                 }
-                state.movingPanelPosition = .init(position: NSEvent.mouseLocation, animationDuration: 0.3)
+                
                 return .none
                 
             case let .updateMovingPanelPosition(info):

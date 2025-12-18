@@ -12,16 +12,16 @@ import ComposableArchitecture
 final actor HotKeyObserver: Sendable {
     static let shared = HotKeyObserver()
     
-    private var hotKeyRef: EventHotKeyRef?
-    private var continuation: AsyncStream<Void>.Continuation?
+    private var hotKeyRefs: [HotKey: EventHotKeyRef] = [:]
+    private var continuation: AsyncStream<HotKey>.Continuation?
     
     init() {
         Task {
-            await registerHotKey()
+            await registerHotKeys()
         }
     }
     
-    var stream: AsyncStream<Void> {
+    var stream: AsyncStream<HotKey> {
         AsyncStream { continuation in
             self.continuation = continuation
         }
@@ -32,19 +32,37 @@ final actor HotKeyObserver: Sendable {
         continuation = nil
     }
     
-    private func onHotKeyPressed() {
-        continuation?.yield(())
+    private func onHotKeyPressed(id: UInt32) {
+        guard let hotKey = HotKey(rawValue: id) else {
+            return
+        }
+        continuation?.yield(hotKey)
     }
     
-    private func registerHotKey() {
-        // ⌘K
-        let keyCode: UInt32 = UInt32(kVK_ANSI_K)
-        let modifiers: UInt32 = UInt32(cmdKey)
+    private func registerHotKeys() {
+        registerHotKey(
+            keyCode: UInt32(kVK_ANSI_K),
+            modifiers: UInt32(cmdKey),
+            hotKey: .callCat
+        )
+        registerHotKey(
+            keyCode: UInt32(kVK_ANSI_U),
+            modifiers: UInt32(cmdKey),
+            hotKey: .toggleHidden
+        )
+    }
+    
+    private func registerHotKey(
+        keyCode: UInt32,
+        modifiers: UInt32,
+        hotKey: HotKey
+    ) {
         
         var hotKeyID = EventHotKeyID(
-            signature: OSType(UInt32(truncatingIfNeeded: HotKeyID.callCat.fourCC)),
-            id: 1
+            signature: OSType(UInt32(truncatingIfNeeded: hotKey.fourCC)),
+            id: hotKey.rawValue
         )
+        var hotKeyRef = hotKeyRefs[hotKey]
         let status = RegisterEventHotKey(
             keyCode,
             modifiers,
@@ -53,6 +71,8 @@ final actor HotKeyObserver: Sendable {
             0,
             &hotKeyRef
         )
+        hotKeyRefs[hotKey] = hotKeyRef
+        
         guard status == noErr else {
             print("RegisterEventHotKey failed:", status)
             return
@@ -76,9 +96,7 @@ final actor HotKeyObserver: Sendable {
                     &hkID
                 )
                 
-                if hkID.id == 1 {
-                    HotKeyObserver.shared.onHotKeyPressed()
-                }
+                HotKeyObserver.shared.onHotKeyPressed(id: hkID.id)
                 return noErr
             },
             1,
@@ -89,12 +107,20 @@ final actor HotKeyObserver: Sendable {
     }
 }
 
-enum HotKeyID: String {
-    case callCat
+enum HotKey: UInt32 {
+    case callCat = 1
+    case toggleHidden = 2
+    
+    private var stringValue: String {
+        switch self {
+        case .callCat: "CallCat"
+        case .toggleHidden: "ToggleHidden"
+        }
+    }
     
     var fourCC: UInt32 {
         var result: UInt32 = 0
-        for u in self.rawValue.utf8.prefix(4) { result = (result << 8) + UInt32(u) }
+        for u in self.stringValue.utf8.prefix(4) { result = (result << 8) + UInt32(u) }
         return result
     }
 }
