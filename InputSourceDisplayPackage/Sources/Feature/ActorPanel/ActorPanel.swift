@@ -35,10 +35,12 @@ struct ActorPanel {
         
         // Store inputs
         case startObserveInputSource
+        case startObserveHotKey
         case startObserveMouseLocation
         case mouseLocationTimerTicked
         case updateLastMouseLocation(CGPoint, Date)
         case updateMovingPanelPosition(MovePanelInfo)
+        case onPressHotKey
         
         // View inputs
         case toggleHidden(to: Bool? = nil)
@@ -58,6 +60,7 @@ struct ActorPanel {
     }
     
     @Dependency(\.inputSource) var inputSource
+    @Dependency(\.hotKeyObserver) var hotKeyObserver
     @Dependency(\.continuousClock) var clock
     @Dependency(\.date) var date
     
@@ -67,6 +70,7 @@ struct ActorPanel {
             case .onAppear:
                 return .run { send in
                     await send(.startObserveInputSource)
+                    await send(.startObserveHotKey)
                     await send(.startObserveMouseLocation)
                 }
                 
@@ -82,6 +86,13 @@ struct ActorPanel {
                     }
                 }
                 
+            case .startObserveHotKey:
+                return .run { send in
+                    for await _ in await self.hotKeyObserver.stream {
+                        await send(.onPressHotKey)
+                    }
+                }
+                
             case .startObserveMouseLocation:
                 return .run { send in
                     for await _ in await self.clock.timer(interval: .seconds(1)) {
@@ -94,6 +105,13 @@ struct ActorPanel {
                 
             case let .updateLastMouseLocation(location, date):
                 state.lastMouseLocation = (location, date)
+                return .none
+                
+            case .onPressHotKey:
+                if state.isHide {
+                    state.isHide = false
+                }
+                state.movingPanelPosition = .init(position: NSEvent.mouseLocation, animationDuration: 0.3)
                 return .none
                 
             case let .updateMovingPanelPosition(info):
