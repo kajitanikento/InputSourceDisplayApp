@@ -24,7 +24,7 @@ final class ActorPanelController {
     ) {
         self.store = store
         setup()
-        bind()
+        observeStore()
     }
     
     private func setup() {
@@ -58,13 +58,7 @@ final class ActorPanelController {
             hostingView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
         ])
         
-        let newFrame = NSRect(origin: panel.frame.origin, size: ActorPanelView.size)
-        panel.setFrame(newFrame, display: true)
-    }
-    
-    private func bind() {
-        observeStore()
-        observeMouseLocation()
+        updatePanelSize()
     }
     
     private func observeStore() {
@@ -76,28 +70,35 @@ final class ActorPanelController {
                 show()
             }
         })
-    }
-    
-    private func observeMouseLocation() {
+        
+        observations.append(observe { [weak self] in
+            guard let self else { return }
+            _ = store.panelSize
+            updatePanelSize()
+        })
+        
         observations.append(observe { [weak self] in
             guard let self,
                   store.movingPanelPosition.position != .zero
             else { return }
+            _ = store.movingPanelPosition
             movePanel(to: store.movingPanelPosition.position, duration: store.movingPanelPosition.animationDuration)
         })
     }
     
-    
+    private func updatePanelSize() {
+        panel.animator().setContentSize(store.panelSize)
+    }
     
     private func movePanel(
         to location: CGPoint,
         duration: Double
     ) {
         let newLocation = CGPoint(
-            x: location.x - ActorPanelView.size.width - 40,
-            y: location.y - ActorPanelView.size.height / 2
+            x: location.x - store.panelSize.width - 40,
+            y: location.y - store.panelSize.height / 2
         )
-        let newFrame = CGRect(origin: newLocation, size: ActorPanelView.size)
+        let newFrame = CGRect(origin: newLocation, size: store.panelSize)
         
         NSAnimationContext.runAnimationGroup { context in
             context.duration = duration

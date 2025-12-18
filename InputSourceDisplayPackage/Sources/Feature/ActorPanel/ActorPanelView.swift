@@ -9,7 +9,14 @@ import SwiftUI
 import ComposableArchitecture
 
 struct ActorPanelView: View {
-    static let size = CGSize(width: 120, height: 170)
+    static func size(withTimer: Bool) -> CGSize {
+        if withTimer {
+            let height = Self.size.height + PomodoroTimerView.size.height + 20
+            return .init(width: 120, height: height)
+        }
+        return Self.size
+    }
+    private static let size = CGSize(width: 120, height: 170)
     
     @Bindable var store: StoreOf<ActorPanel>
     
@@ -98,10 +105,13 @@ struct ActorPanelView: View {
     }
     
     private var content: some View {
-        ZStack {
-            inputSourceLabel
-            cat
+        VStack(spacing: 0) {
             pomodoroTimer
+            
+            ZStack {
+                inputSourceLabel
+                cat
+            }
         }
         .shadow(color: .black.opacity(0.2),radius: 4, x: 2, y: 2)
         .opacity(opacity)
@@ -120,6 +130,7 @@ struct ActorPanelView: View {
         CatFrameForwardView(
             store: store.scope(state: \.cat, action: \.cat)
         )
+        .frame(width: Self.size.width - 12, height: Self.size.height - 12)
     }
     
     @ViewBuilder
@@ -128,7 +139,7 @@ struct ActorPanelView: View {
             Spacer(minLength: 0)
             
             _inputSourceLabel
-                .padding(.bottom, 14)
+                .padding(.bottom, 12)
                 .padding(.trailing, 4)
         }
         .frame(height: Self.size.height)

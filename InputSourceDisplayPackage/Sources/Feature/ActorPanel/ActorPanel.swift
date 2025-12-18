@@ -22,6 +22,10 @@ struct ActorPanel {
         
         var pomodoroTimer: PomodoroTimer.State = .init()
         var cat: Cat.State = .init()
+        
+        var panelSize: CGSize {
+            ActorPanelView.size(withTimer: pomodoroTimer.isShow)
+        }
     }
     
     enum Action {
@@ -118,17 +122,18 @@ struct ActorPanel {
             case let .pomodoroTimer(action):
                 switch action {
                 case .completeTimer:
-                    let panelWidth = ActorPanelView.size.width
+                    let panelSize = state.panelSize
                     return .run { send in
                         let limitDate = await self.date.now.addingTimeInterval(30)
                         for await _ in await self.clock.timer(interval: .seconds(0.1)) {
-                            if await self.date.now >= limitDate {
+                            guard !Task.isCancelled else { return }
+                            if self.date.now >= limitDate {
                                 await send(.pomodoroTimer(.stopTimer))
                                 return
                             }
                             let mouseLocation = NSEvent.mouseLocation
                             let position = CGPoint(
-                                x: mouseLocation.x + 40 + panelWidth / 2,
+                                x: mouseLocation.x + 40 + panelSize.width / 2,
                                 y: mouseLocation.y
                             )
                             await send(.updateMovingPanelPosition(.init(position: position, animationDuration: 0.5)))

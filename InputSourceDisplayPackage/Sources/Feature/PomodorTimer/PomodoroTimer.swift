@@ -19,6 +19,10 @@ struct PomodoroTimer {
         var isTimerRunning: Bool {
             time != nil
         }
+        
+        var isShow: Bool {
+            isTimerRunning || isComplete
+        }
     }
     
     enum Action {
