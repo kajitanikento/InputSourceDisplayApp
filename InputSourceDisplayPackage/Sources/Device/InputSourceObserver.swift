@@ -10,7 +10,7 @@ import AppKit
 import Carbon
 import ComposableArchitecture
 
-final class InputSourceObserver {
+actor InputSourceObserver: Sendable {
     private var observer: (any NSObjectProtocol)?
     private var continuation: AsyncStream<InputSource>.Continuation?
 
@@ -60,16 +60,18 @@ final class InputSourceObserver {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.updateCurrent()
+            Task {
+                await self?.updateCurrent()
+            }
         }
     }
 }
 
-enum InputSource {
+enum InputSource: Sendable {
     case abc
     case hiragana
 
-    static func of(_ name: String) -> Self {
+    nonisolated static func of(_ name: String) -> Self {
         // TODO: サポート外の言語の考慮を追加する
         if name.lowercased().contains("us") || name.contains("英数") || name.lowercased().contains("abc") {
             return .abc
@@ -87,7 +89,7 @@ extension DependencyValues {
     }
 }
 
-private enum InputSourceKey: DependencyKey {
+private enum InputSourceKey: DependencyKey, Sendable {
     
     static let liveValue: InputSourceObserver = .init()
     

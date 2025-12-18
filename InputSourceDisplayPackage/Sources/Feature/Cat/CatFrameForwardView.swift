@@ -20,7 +20,7 @@ struct CatFrameForwardView: View {
     @State var animationTask: Task<Void, Never>?
     
     var body: some View {
-        Image(store.type.frames[frameIndex])
+        Image(store.type.frames[frameIndex], bundle: .module)
             .resizable()
             .scaledToFit()
             .onAppear(perform: startAnimation)

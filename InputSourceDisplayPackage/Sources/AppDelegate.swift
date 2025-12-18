@@ -8,18 +8,23 @@
 import AppKit
 import ComposableArchitecture
 
-final class AppDelegate: NSObject, NSApplicationDelegate {
+@MainActor
+public final class AppDelegate: NSObject, NSApplicationDelegate {
     let store = Store(initialState: ActorPanel.State()) {
         ActorPanel()
         #if DEBUG
             // ._printChanges()
         #endif
     }
-    
+
     private var statusItem: NSStatusItem!
     private var panelController: ActorPanelController!
+
+    public override init() {
+        super.init()
+    }
     
-    func applicationDidFinishLaunching(_ notification: Notification) {
+    public func applicationDidFinishLaunching(_ notification: Notification) {
         panelController = ActorPanelController(store: store)
         setupStatusItem()
     }

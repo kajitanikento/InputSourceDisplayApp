@@ -67,8 +67,9 @@ struct ActorPanel {
                 }
                 
             case .onDisappear:
-                inputSource.stop()
-                return .none
+                return .run { _ in
+                    await inputSource.stop()
+                }
                 
             case .startObserveInputSource:
                 return .run { send in
@@ -117,16 +118,17 @@ struct ActorPanel {
             case let .pomodoroTimer(action):
                 switch action {
                 case .completeTimer:
+                    let panelWidth = ActorPanelView.size.width
                     return .run { send in
-                        let limitDate = self.date.now.addingTimeInterval(30)
+                        let limitDate = await self.date.now.addingTimeInterval(30)
                         for await _ in await self.clock.timer(interval: .seconds(0.1)) {
-                            if self.date.now >= limitDate {
+                            if await self.date.now >= limitDate {
                                 await send(.pomodoroTimer(.stopTimer))
                                 return
                             }
                             let mouseLocation = NSEvent.mouseLocation
                             let position = CGPoint(
-                                x: mouseLocation.x + 40 + ActorPanelView.size.width / 2,
+                                x: mouseLocation.x + 40 + panelWidth / 2,
                                 y: mouseLocation.y
                             )
                             await send(.updateMovingPanelPosition(.init(position: position, animationDuration: 0.5)))

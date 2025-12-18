@@ -1,16 +1,18 @@
 //
-//  InputSourceDisplayAppApp.swift
+//  InputSourceDisplayApp.swift
 //  InputSourceDisplayApp
 //
 //  Created by kajitani kento on 2025/11/29.
 //
 
 import SwiftUI
+import InputSourceDisplayPackage
 
 @main
-struct InputSourceDisplayAppApp: App {
+struct InputSourceDisplayApp: App {
+
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    
+
     var body: some Scene {
         Settings {
             VStack(alignment: .leading, spacing: 8) {

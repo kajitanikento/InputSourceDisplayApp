@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		CFFF8A152EED977100A0309C /* ComposableArchitecture in Frameworks */ = {isa = PBXBuildFile; productRef = CFFF8A142EED977100A0309C /* ComposableArchitecture */; };
+		CFFF8A7B2EF43A6600A0309C /* InputSourceDisplayPackage in Frameworks */ = {isa = PBXBuildFile; productRef = CFFF8A7A2EF43A6600A0309C /* InputSourceDisplayPackage */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,7 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CFFF8A152EED977100A0309C /* ComposableArchitecture in Frameworks */,
+				CFFF8A7B2EF43A6600A0309C /* InputSourceDisplayPackage in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -70,7 +70,7 @@
 			);
 			name = InputSourceDisplayApp;
 			packageProductDependencies = (
-				CFFF8A142EED977100A0309C /* ComposableArchitecture */,
+				CFFF8A7A2EF43A6600A0309C /* InputSourceDisplayPackage */,
 			);
 			productName = InputSourceDisplayApp;
 			productReference = CF96F5552EDA9CBF00248496 /* InputSourceDisplayApp.app */;
@@ -101,7 +101,7 @@
 			mainGroup = CF96F54C2EDA9CBF00248496;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				CFFF8A132EED977100A0309C /* XCRemoteSwiftPackageReference "swift-composable-architecture" */,
+				CFFF8A792EF43A6600A0309C /* XCLocalSwiftPackageReference "InputSourceDisplayPackage" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CF96F5562EDA9CBF00248496 /* Products */;
@@ -292,7 +292,7 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 			};
 			name = Debug;
 		};
@@ -333,7 +333,7 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 			};
 			name = Release;
 		};
@@ -360,22 +360,17 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		CFFF8A132EED977100A0309C /* XCRemoteSwiftPackageReference "swift-composable-architecture" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/pointfreeco/swift-composable-architecture.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.23.1;
-			};
+/* Begin XCLocalSwiftPackageReference section */
+		CFFF8A792EF43A6600A0309C /* XCLocalSwiftPackageReference "InputSourceDisplayPackage" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = InputSourceDisplayPackage;
 		};
-/* End XCRemoteSwiftPackageReference section */
+/* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		CFFF8A142EED977100A0309C /* ComposableArchitecture */ = {
+		CFFF8A7A2EF43A6600A0309C /* InputSourceDisplayPackage */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = CFFF8A132EED977100A0309C /* XCRemoteSwiftPackageReference "swift-composable-architecture" */;
-			productName = ComposableArchitecture;
+			productName = InputSourceDisplayPackage;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
