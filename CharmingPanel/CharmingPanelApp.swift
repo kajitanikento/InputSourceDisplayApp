@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-import CharmingPanelPackage
+import Core
 
 @main
 struct CharmingPanel: App {
