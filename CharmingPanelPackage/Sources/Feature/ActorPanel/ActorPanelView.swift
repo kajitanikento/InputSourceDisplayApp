@@ -64,6 +64,9 @@ struct ActorPanelView: View {
                     isLongPress = false
                 }
             }
+            .onRightClick {
+                
+            }
             .onTapGesture {
                 if store.pomodoroTimer.isComplete {
                     store.send(.pomodoroTimer(.stopTimer))
@@ -114,7 +117,7 @@ struct ActorPanelView: View {
             }
         }
         .shadow(color: .black.opacity(0.2),radius: 4, x: 2, y: 2)
-        .opacity(opacity)
+        // .opacity(opacity)
     }
     
     // MARK: Subviews
@@ -193,4 +196,3 @@ struct ActorPanelView: View {
         store: .init(initialState: .init()) { ActorPanel() }
     )
 }
-
