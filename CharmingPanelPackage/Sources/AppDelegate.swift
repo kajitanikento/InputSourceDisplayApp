@@ -1,6 +1,6 @@
 //
 //  AppDelegate.swift
-//  InputSourceDisplayApp
+//  CharmingPanel
 //
 //  Created by kajitani kento on 2025/12/06.
 //

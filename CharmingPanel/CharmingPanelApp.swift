@@ -1,15 +1,15 @@
 //
-//  InputSourceDisplayApp.swift
-//  InputSourceDisplayApp
+//  CharmingPanel.swift
+//  CharmingPanel
 //
 //  Created by kajitani kento on 2025/11/29.
 //
 
 import SwiftUI
-import InputSourceDisplayPackage
+import CharmingPanelPackage
 
 @main
-struct InputSourceDisplayApp: App {
+struct CharmingPanel: App {
 
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 

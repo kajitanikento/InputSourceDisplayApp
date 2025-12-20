@@ -1,6 +1,6 @@
 //
 //  HotKeyObserver.swift
-//  InputSourceDisplayPackage
+//  CharmingPanelPackage
 //
 //  Created by kajitani kento on 2025/12/19.
 //
