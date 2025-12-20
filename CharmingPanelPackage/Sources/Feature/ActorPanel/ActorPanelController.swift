@@ -79,15 +79,16 @@ final class ActorPanelController {
         
         observations.append(observe { [weak self] in
             guard let self,
-                  store.movingPanelPosition.position != .zero
+                  let movingPanelPosition = store.movingPanelPosition
             else { return }
             _ = store.movingPanelPosition
-            movePanel(to: store.movingPanelPosition.position, duration: store.movingPanelPosition.animationDuration)
+            movePanel(to: movingPanelPosition.position, duration: movingPanelPosition.animationDuration)
+            store.send(.finishMovePanelPosition)
         })
     }
     
     private func updatePanelSize() {
-        panel.animator().setContentSize(store.panelSize)
+        panel.setContentSize(store.panelSize)
     }
     
     private func movePanel(

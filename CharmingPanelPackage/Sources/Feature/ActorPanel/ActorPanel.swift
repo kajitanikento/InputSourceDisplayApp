@@ -14,7 +14,7 @@ struct ActorPanel {
     @ObservableState
     struct State {
         var currentInputSource: InputSource = .abc
-        var movingPanelPosition: MovePanelInfo = .zero
+        var movingPanelPosition: MovePanelInfo?
         var lastMouseLocation: (CGPoint, Date)?
         
         var isHide: Bool = false
@@ -39,7 +39,8 @@ struct ActorPanel {
         case startObserveMouseLocation
         case mouseLocationTimerTicked
         case updateLastMouseLocation(CGPoint, Date)
-        case updateMovingPanelPosition(MovePanelInfo)
+        case startMovePanelPosition(MovePanelInfo)
+        case finishMovePanelPosition
         case onPressHotKey(HotKey)
         
         // View inputs
@@ -121,8 +122,12 @@ struct ActorPanel {
                 
                 return .none
                 
-            case let .updateMovingPanelPosition(info):
+            case let .startMovePanelPosition(info):
                 state.movingPanelPosition = info
+                return .none
+                
+            case .finishMovePanelPosition:
+                state.movingPanelPosition = nil
                 return .none
                 
             case let .toggleHidden(isHide):
@@ -161,7 +166,7 @@ struct ActorPanel {
                                 x: mouseLocation.x + 40 + panelSize.width / 2,
                                 y: mouseLocation.y
                             )
-                            await send(.updateMovingPanelPosition(.init(position: position, animationDuration: 0.5)))
+                            await send(.startMovePanelPosition(.init(position: position, animationDuration: 0.5)))
                         }
                     }
                     .cancellable(id: CancelID.moveCatOnCompleteTimer)
@@ -202,7 +207,7 @@ struct ActorPanel {
         // マウスポインタが一定時間同じ場所で止まっていたら寄っていく
         if date.now.timeIntervalSince(beforeMouseLocation.1) > 30 {
             return .run { send in
-                await send(.updateMovingPanelPosition(.init(position: currentMouseLocation)))
+                await send(.startMovePanelPosition(.init(position: currentMouseLocation)))
                 await send(.updateLastMouseLocation(currentMouseLocation, date.now))
             }
         }
