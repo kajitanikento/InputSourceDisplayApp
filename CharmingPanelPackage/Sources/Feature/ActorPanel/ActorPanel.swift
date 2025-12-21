@@ -16,13 +16,15 @@ struct ActorPanel {
         var currentInputSource: InputSource = .abc
         var movingPanelPosition: MovePanelInfo?
         var lastMouseLocation: (CGPoint, Date)?
-        
+
         var isHide: Bool = false
         var withMove: Bool = false
-        
+
+        var latestTimerMinutes: [Int] = []
+
         var pomodoroTimer: PomodoroTimer.State = .init()
         var cat: Cat.State = .init()
-        
+
         var panelSize: CGSize {
             ActorPanelView.size
         }
@@ -32,7 +34,7 @@ struct ActorPanel {
         // Lifecycle
         case onAppear
         case onDisappear
-        
+
         // Store inputs
         case startObserveInputSource
         case startObserveHotKey
@@ -43,15 +45,16 @@ struct ActorPanel {
         case finishMovePanelPosition
         case onPressHotKey(HotKey)
         case onStopTimer
-        
+
         // View inputs
         case toggleHidden(to: Bool? = nil)
         case toggleWithAnimation
         case toggleWithMove
-        
+        case setLatestTimerMinute(Int)
+
         // Dependency inputs
         case changeInputSource(InputSource)
-        
+
         // Child reducer
         case pomodoroTimer(PomodoroTimer.Action)
         case cat(Cat.Action)
@@ -83,21 +86,21 @@ struct ActorPanel {
                 
             case .startObserveInputSource:
                 return .run { send in
-                    for await newSouce in await self.inputSource.stream {
+                    for await newSouce in await self.inputSource.stream() {
                         await send(.changeInputSource(newSouce))
                     }
                 }
                 
             case .startObserveHotKey:
                 return .run { send in
-                    for await hotKey in await self.hotKeyObserver.stream {
+                    for await hotKey in await self.hotKeyObserver.stream() {
                         await send(.onPressHotKey(hotKey))
                     }
                 }
                 
             case .startObserveMouseLocation:
                 return .run { send in
-                    for await _ in await self.clock.timer(interval: .seconds(1)) {
+                    for await _ in self.clock.timer(interval: .seconds(1)) {
                         await send(.mouseLocationTimerTicked)
                     }
                 }
@@ -148,7 +151,14 @@ struct ActorPanel {
             case .toggleWithMove:
                 state.withMove.toggle()
                 return .none
-                
+
+            case let .setLatestTimerMinute(minute):
+                state.latestTimerMinutes.insert(minute, at: 0)
+                if state.latestTimerMinutes.count > 2 {
+                    state.latestTimerMinutes.removeLast()
+                }
+                return .none
+
             case let .changeInputSource(source):
                 state.currentInputSource = source
                 return .none
@@ -161,10 +171,11 @@ struct ActorPanel {
                 case .completeTimer:
                     let panelSize = state.panelSize
                     return .run { send in
+                        await send(.cat(.changeType(.completeTimer)))
                         await send(.cat(.changeAnimationInterval(0.07)))
                         
-                        let limitDate = await self.date.now.addingTimeInterval(30)
-                        for await _ in await self.clock.timer(interval: .seconds(0.1)) {
+                        let limitDate = self.date.now.addingTimeInterval(30)
+                        for await _ in self.clock.timer(interval: .seconds(0.1)) {
                             guard !Task.isCancelled else { return }
                             if self.date.now >= limitDate {
                                 await send(.pomodoroTimer(.stopTimer))
@@ -185,11 +196,7 @@ struct ActorPanel {
                         await send(.cat(.changeAnimationInterval(0.15)))
                         await send(.onStopTimer)
                     }
-                    
-                default:
-                    break
                 }
-                return .none
                 
             case .cat:
                 return .none

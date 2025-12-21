@@ -9,10 +9,10 @@ import SwiftUI
 import ComposableArchitecture
 
 struct ActorPanelView: View {
-    static let size = CGSize(width: 120, height: 170)
+    nonisolated static let size = CGSize(width: 120, height: 170)
     
     @Bindable var store: StoreOf<ActorPanel>
-    
+
     @State var isLongPress = false
     @State var hoverAnimationProgress: Double = 0
     
@@ -20,38 +20,49 @@ struct ActorPanelView: View {
         content
             .contextMenu {
                 if store.pomodoroTimer.isTimerRunning {
-                    Button("Stop timer") {
+                    Button("Stop timer", systemImage: "stop.fill") {
                         store.send(.pomodoroTimer(.stopTimer))
                     }
                 } else {
-                    Button("Start timer(25m)") {
-                        store.send(.pomodoroTimer(.startTimer(endDate: .now.addingTimeInterval(25 * 60))))
-                    }
-                    Button("Start timer(5m)") {
-                        store.send(.pomodoroTimer(.startTimer(endDate: .now.addingTimeInterval(5 * 60))))
+                    Menu("Start timer", systemImage: "gauge.with.needle") {
+                        if !store.latestTimerMinutes.isEmpty {
+                            Text("recent")
+                            ForEach(store.latestTimerMinutes.indices, id: \.self) { index in
+                                let minute = store.latestTimerMinutes[index]
+                                Button("\(minute)m") {
+                                    store.send(.pomodoroTimer(.startTimer(endDate: .now.addingTimeInterval(Double(minute * 60)))))
+                                    store.send(.setLatestTimerMinute(minute))
+                                }
+                            }
+
+                            Divider()
+                        }
+
+                        Menu("choose") {
+                            ForEach(1...12, id: \.self) { num in
+                                let minute = num * 5
+                                Button("\(minute)m") {
+                                    store.send(.pomodoroTimer(.startTimer(endDate: .now.addingTimeInterval(Double(minute * 60)))))
+                                    store.send(.setLatestTimerMinute(minute))
+                                }
+                            }
+                        }
                     }
                 }
                 
-                Button("\(store.state.cat.withAnimation ? "Stop" : "Start") animation") {
+                Divider()
+                
+                Button("\(store.state.cat.withAnimation ? "Stop" : "Start") animation", systemImage: "figure.run") {
                     store.send(.toggleWithAnimation)
                 }
-                Button("\(store.withMove ? "Stop" : "Start") move") {
-                    store.send(.toggleWithMove)
-                }
-                Button("Hide") {
+                
+                Divider()
+                
+                Button("Hide panel", systemImage: "eye.slash") {
                     store.send(.toggleHidden(to: true))
                 }
             }
             .onHover { isHover in
-                if store.pomodoroTimer.isComplete {
-                    return
-                }
-                
-                let duration = 0.15
-                withAnimation(isHover ? .easeIn(duration: duration) : .easeOut(duration: duration)) {
-                    hoverAnimationProgress = isHover ? 1 : 0
-                }
-                
                 if !isHover,
                    isLongPress {
                     isLongPress = false
@@ -118,12 +129,12 @@ struct ActorPanelView: View {
         PomodoroTimerView(
             store: store.scope(state: \.pomodoroTimer, action: \.pomodoroTimer)
         )
-        .offset(y: -22)
+        .offset(y: -20)
         .opacity(isLongPress ? 0 : 1)
     }
     
     private var cat: some View {
-        CatFrameForwardView(
+        CatView(
             store: store.scope(state: \.cat, action: \.cat)
         )
         .frame(width: Self.size.width - 12, height: Self.size.height - 12)
@@ -156,14 +167,7 @@ struct ActorPanelView: View {
     }
     
     // MARK: Helpers
-    
-    private var opacity: Double {
-        if isLongPress {
-            return 1
-        }
-        return max(0.1, 1 - hoverAnimationProgress)
-    }
-    
+
     private var shortLabel: String {
         switch store.currentInputSource {
         case .abc: "A"
@@ -188,6 +192,22 @@ struct ActorPanelView: View {
 
 #Preview {
     ActorPanelView(
-        store: .init(initialState: .init()) { ActorPanel() }
+        store: .init(
+            initialState: {
+                var state = ActorPanel.State()
+                state.pomodoroTimer.time = .init(startDate: .now, endDate: .now.addingTimeInterval(3600))
+                state.pomodoroTimer.isComplete = true
+                state.cat.type = .completeTimer
+                return state
+            }()
+        ) {
+            withDependencies {
+                $0.inputSource.stream = { .init { continuation in
+                    continuation.yield(.hiragana)
+                } }
+            } operation: {
+                ActorPanel()
+            }
+        }
     )
 }

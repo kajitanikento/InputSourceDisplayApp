@@ -18,6 +18,8 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private var statusItem: NSStatusItem!
+    private var toggleHiddenMenuItem: NSMenuItem!
+    
     private var panelController: ActorPanelController!
 
     public override init() {
@@ -30,28 +32,36 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func setupStatusItem() {
-        let bar = NSStatusBar.system
-        statusItem = bar.statusItem(withLength: NSStatusItem.variableLength)
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
         if let button = statusItem.button {
-            button.image = NSImage(
-                systemSymbolName: "keyboard",
-                accessibilityDescription: "Input Source Indicator"
-            )
+            let image = NSImage(resource: .init(name: "MenuIcon", bundle: .module))
+            image.size = .init(width: 20, height: 20)
+            button.image = image
             button.action = #selector(togglePanel)
             button.target = self
         }
         
         let menu = NSMenu()
-        menu.addItem(NSMenuItem(title: "Show / Hide Indicator", action: #selector(togglePanel), keyEquivalent: ""))
+        toggleHiddenMenuItem = NSMenuItem(title: "", action: #selector(togglePanel), keyEquivalent: "u")
+        toggleHiddenMenuItem.image = NSImage(systemSymbolName: "eye", accessibilityDescription: "Switch panel visibility")
+        updateToggleHiddenMenuItemTitle()
+        menu.addItem(toggleHiddenMenuItem)
         menu.addItem(NSMenuItem.separator())
-        menu.addItem(NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "q"))
+        let quitMenuItem = NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "q")
+        quitMenuItem.image = NSImage(systemSymbolName: "xmark.circle.fill", accessibilityDescription: "Quit application")
+        menu.addItem(quitMenuItem)
         
         statusItem.menu = menu
     }
     
+    private func updateToggleHiddenMenuItemTitle() {
+        toggleHiddenMenuItem.title = "\(store.isHide ? "Show" : "Hide") panel"
+    }
+    
     @objc private func togglePanel() {
         store.send(.toggleHidden())
+        updateToggleHiddenMenuItemTitle()
     }
     
     @objc private func quit() {
