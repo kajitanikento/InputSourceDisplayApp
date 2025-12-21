@@ -32,7 +32,6 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func setupStatusItem() {
-    
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
         if let button = statusItem.button {
@@ -45,10 +44,13 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         
         let menu = NSMenu()
         toggleHiddenMenuItem = NSMenuItem(title: "", action: #selector(togglePanel), keyEquivalent: "u")
+        toggleHiddenMenuItem.image = NSImage(systemSymbolName: "eye", accessibilityDescription: "Switch panel visibility")
         updateToggleHiddenMenuItemTitle()
         menu.addItem(toggleHiddenMenuItem)
         menu.addItem(NSMenuItem.separator())
-        menu.addItem(NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "q"))
+        let quitMenuItem = NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "q")
+        quitMenuItem.image = NSImage(systemSymbolName: "xmark.circle.fill", accessibilityDescription: "Quit application")
+        menu.addItem(quitMenuItem)
         
         statusItem.menu = menu
     }
