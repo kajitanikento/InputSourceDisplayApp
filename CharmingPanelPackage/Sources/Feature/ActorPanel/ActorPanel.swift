@@ -100,7 +100,7 @@ struct ActorPanel {
                 
             case .startObserveMouseLocation:
                 return .run { send in
-                    for await _ in await self.clock.timer(interval: .seconds(1)) {
+                    for await _ in self.clock.timer(interval: .seconds(1)) {
                         await send(.mouseLocationTimerTicked)
                     }
                 }
