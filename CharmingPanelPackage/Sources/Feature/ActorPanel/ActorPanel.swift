@@ -16,13 +16,16 @@ struct ActorPanel {
         var currentInputSource: InputSource = .abc
         var movingPanelPosition: MovePanelInfo?
         var lastMouseLocation: (CGPoint, Date)?
-        
+
         var isHide: Bool = false
         var withMove: Bool = false
-        
+
+        var latestTimerMinute1: Int?
+        var latestTimerMinute2: Int?
+
         var pomodoroTimer: PomodoroTimer.State = .init()
         var cat: Cat.State = .init()
-        
+
         var panelSize: CGSize {
             ActorPanelView.size
         }
@@ -32,7 +35,7 @@ struct ActorPanel {
         // Lifecycle
         case onAppear
         case onDisappear
-        
+
         // Store inputs
         case startObserveInputSource
         case startObserveHotKey
@@ -43,15 +46,16 @@ struct ActorPanel {
         case finishMovePanelPosition
         case onPressHotKey(HotKey)
         case onStopTimer
-        
+
         // View inputs
         case toggleHidden(to: Bool? = nil)
         case toggleWithAnimation
         case toggleWithMove
-        
+        case setLatestTimerMinute(Int)
+
         // Dependency inputs
         case changeInputSource(InputSource)
-        
+
         // Child reducer
         case pomodoroTimer(PomodoroTimer.Action)
         case cat(Cat.Action)
@@ -148,7 +152,16 @@ struct ActorPanel {
             case .toggleWithMove:
                 state.withMove.toggle()
                 return .none
-                
+
+            case let .setLatestTimerMinute(minute):
+                if state.latestTimerMinute1 == nil {
+                    state.latestTimerMinute1 = minute
+                } else {
+                    state.latestTimerMinute2 = state.latestTimerMinute1
+                    state.latestTimerMinute1 = minute
+                }
+                return .none
+
             case let .changeInputSource(source):
                 state.currentInputSource = source
                 return .none

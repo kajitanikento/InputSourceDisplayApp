@@ -12,23 +12,11 @@ struct ActorPanelView: View {
     static let size = CGSize(width: 120, height: 170)
     
     @Bindable var store: StoreOf<ActorPanel>
-    
+
     @State var isLongPress = false
     @State var hoverAnimationProgress: Double = 0
-    
-    @State var latestTimerMinute1: Int?
-    @State var latestTimerMinute2: Int?
-    
+
     @State var chooseTimerMinute: Int = 1
-    
-    func setLatestTimerMinute(_ minute: Int) {
-        guard let latestTimerMinute1 else {
-            latestTimerMinute1 = minute
-            return
-        }
-        latestTimerMinute2 = latestTimerMinute1
-        self.latestTimerMinute1 = minute
-    }
     
     var body: some View {
         content
@@ -40,26 +28,26 @@ struct ActorPanelView: View {
                 } else {
                     Menu("Start timer", systemImage: "gauge.with.needle") {
                         Text("recent")
-                        if let latestTimerMinute1 {
+                        if let latestTimerMinute1 = store.latestTimerMinute1 {
                             Button("\(latestTimerMinute1)m") {
                                 store.send(.pomodoroTimer(.startTimer(endDate: .now.addingTimeInterval(Double(latestTimerMinute1 * 60)))))
                             }
                         }
-                        if let latestTimerMinute2 {
+                        if let latestTimerMinute2 = store.latestTimerMinute2 {
                             Button("\(latestTimerMinute2)m") {
                                 store.send(.pomodoroTimer(.startTimer(endDate: .now.addingTimeInterval(Double(latestTimerMinute2 * 60)))))
-                                setLatestTimerMinute(latestTimerMinute2)
+                                store.send(.setLatestTimerMinute(latestTimerMinute2))
                             }
                         }
-                        
+
                         Divider()
-                        
+
                         Menu("choose") {
                             ForEach(1...12, id: \.self) { num in
                                 let minute = num * 5
                                 Button("\(minute)m") {
                                     store.send(.pomodoroTimer(.startTimer(endDate: .now.addingTimeInterval(Double(minute * 60)))))
-                                    setLatestTimerMinute(minute)
+                                    store.send(.setLatestTimerMinute(minute))
                                 }
                             }
                         }
