@@ -32,14 +32,13 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func setupStatusItem() {
-        let bar = NSStatusBar.system
-        statusItem = bar.statusItem(withLength: NSStatusItem.variableLength)
+    
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
         if let button = statusItem.button {
-            button.image = NSImage(
-                systemSymbolName: "keyboard",
-                accessibilityDescription: "Input Source Indicator"
-            )
+            let image = NSImage(resource: .init(name: "MenuIcon", bundle: .module))
+            image.size = .init(width: 20, height: 20)
+            button.image = image
             button.action = #selector(togglePanel)
             button.target = self
         }
