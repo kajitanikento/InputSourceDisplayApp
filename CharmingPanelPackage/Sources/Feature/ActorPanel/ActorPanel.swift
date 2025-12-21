@@ -20,8 +20,7 @@ struct ActorPanel {
         var isHide: Bool = false
         var withMove: Bool = false
 
-        var latestTimerMinute1: Int?
-        var latestTimerMinute2: Int?
+        var latestTimerMinutes: [Int] = []
 
         var pomodoroTimer: PomodoroTimer.State = .init()
         var cat: Cat.State = .init()
@@ -154,11 +153,9 @@ struct ActorPanel {
                 return .none
 
             case let .setLatestTimerMinute(minute):
-                if state.latestTimerMinute1 == nil {
-                    state.latestTimerMinute1 = minute
-                } else {
-                    state.latestTimerMinute2 = state.latestTimerMinute1
-                    state.latestTimerMinute1 = minute
+                state.latestTimerMinutes.insert(minute, at: 0)
+                if state.latestTimerMinutes.count > 2 {
+                    state.latestTimerMinutes.removeLast()
                 }
                 return .none
 

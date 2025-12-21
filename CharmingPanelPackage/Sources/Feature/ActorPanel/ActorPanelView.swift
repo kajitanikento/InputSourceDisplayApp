@@ -27,20 +27,18 @@ struct ActorPanelView: View {
                     }
                 } else {
                     Menu("Start timer", systemImage: "gauge.with.needle") {
-                        Text("recent")
-                        if let latestTimerMinute1 = store.latestTimerMinute1 {
-                            Button("\(latestTimerMinute1)m") {
-                                store.send(.pomodoroTimer(.startTimer(endDate: .now.addingTimeInterval(Double(latestTimerMinute1 * 60)))))
+                        if !store.latestTimerMinutes.isEmpty {
+                            Text("recent")
+                            ForEach(store.latestTimerMinutes.indices, id: \.self) { index in
+                                let minute = store.latestTimerMinutes[index]
+                                Button("\(minute)m") {
+                                    store.send(.pomodoroTimer(.startTimer(endDate: .now.addingTimeInterval(Double(minute * 60)))))
+                                    store.send(.setLatestTimerMinute(minute))
+                                }
                             }
-                        }
-                        if let latestTimerMinute2 = store.latestTimerMinute2 {
-                            Button("\(latestTimerMinute2)m") {
-                                store.send(.pomodoroTimer(.startTimer(endDate: .now.addingTimeInterval(Double(latestTimerMinute2 * 60)))))
-                                store.send(.setLatestTimerMinute(latestTimerMinute2))
-                            }
-                        }
 
-                        Divider()
+                            Divider()
+                        }
 
                         Menu("choose") {
                             ForEach(1...12, id: \.self) { num in
@@ -62,7 +60,7 @@ struct ActorPanelView: View {
                 
                 Divider()
                 
-                Button("Hide", systemImage: "eye.slash") {
+                Button("Hide panel", systemImage: "eye.slash") {
                     store.send(.toggleHidden(to: true))
                 }
             }

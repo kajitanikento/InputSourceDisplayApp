@@ -18,6 +18,8 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private var statusItem: NSStatusItem!
+    private var toggleHiddenMenuItem: NSMenuItem!
+    
     private var panelController: ActorPanelController!
 
     public override init() {
@@ -43,15 +45,22 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         
         let menu = NSMenu()
-        menu.addItem(NSMenuItem(title: "Show / Hide Indicator", action: #selector(togglePanel), keyEquivalent: ""))
+        toggleHiddenMenuItem = NSMenuItem(title: "", action: #selector(togglePanel), keyEquivalent: "u")
+        updateToggleHiddenMenuItemTitle()
+        menu.addItem(toggleHiddenMenuItem)
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "q"))
         
         statusItem.menu = menu
     }
     
+    private func updateToggleHiddenMenuItemTitle() {
+        toggleHiddenMenuItem.title = "\(store.isHide ? "Show" : "Hide") panel"
+    }
+    
     @objc private func togglePanel() {
         store.send(.toggleHidden())
+        updateToggleHiddenMenuItemTitle()
     }
     
     @objc private func quit() {
