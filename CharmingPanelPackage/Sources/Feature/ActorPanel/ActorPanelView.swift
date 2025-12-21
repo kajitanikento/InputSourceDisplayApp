@@ -16,29 +16,65 @@ struct ActorPanelView: View {
     @State var isLongPress = false
     @State var hoverAnimationProgress: Double = 0
     
+    @State var latestTimerMinute1: Int?
+    @State var latestTimerMinute2: Int?
+    
+    @State var chooseTimerMinute: Int = 1
+    
+    func setLatestTimerMinute(_ minute: Int) {
+        guard let latestTimerMinute1 else {
+            latestTimerMinute1 = minute
+            return
+        }
+        latestTimerMinute2 = latestTimerMinute1
+        self.latestTimerMinute1 = minute
+    }
+    
     var body: some View {
         content
             .contextMenu {
                 if store.pomodoroTimer.isTimerRunning {
-                    Button("Stop timer") {
+                    Button("Stop timer", systemImage: "stop.fill") {
                         store.send(.pomodoroTimer(.stopTimer))
                     }
                 } else {
-                    Button("Start timer(25m)") {
-                        store.send(.pomodoroTimer(.startTimer(endDate: .now.addingTimeInterval(25 * 60))))
-                    }
-                    Button("Start timer(5m)") {
-                        store.send(.pomodoroTimer(.startTimer(endDate: .now.addingTimeInterval(5 * 60))))
+                    Menu("Start timer", systemImage: "gauge.with.needle") {
+                        Text("recent")
+                        if let latestTimerMinute1 {
+                            Button("\(latestTimerMinute1)m") {
+                                store.send(.pomodoroTimer(.startTimer(endDate: .now.addingTimeInterval(Double(latestTimerMinute1 * 60)))))
+                            }
+                        }
+                        if let latestTimerMinute2 {
+                            Button("\(latestTimerMinute2)m") {
+                                store.send(.pomodoroTimer(.startTimer(endDate: .now.addingTimeInterval(Double(latestTimerMinute2 * 60)))))
+                                setLatestTimerMinute(latestTimerMinute2)
+                            }
+                        }
+                        
+                        Divider()
+                        
+                        Menu("choose") {
+                            ForEach(1...12, id: \.self) { num in
+                                let minute = num * 5
+                                Button("\(minute)m") {
+                                    store.send(.pomodoroTimer(.startTimer(endDate: .now.addingTimeInterval(Double(minute * 60)))))
+                                    setLatestTimerMinute(minute)
+                                }
+                            }
+                        }
                     }
                 }
                 
-                Button("\(store.state.cat.withAnimation ? "Stop" : "Start") animation") {
+                Divider()
+                
+                Button("\(store.state.cat.withAnimation ? "Stop" : "Start") animation", systemImage: "figure.run") {
                     store.send(.toggleWithAnimation)
                 }
-                Button("\(store.withMove ? "Stop" : "Start") move") {
-                    store.send(.toggleWithMove)
-                }
-                Button("Hide") {
+                
+                Divider()
+                
+                Button("Hide", systemImage: "eye.slash") {
                     store.send(.toggleHidden(to: true))
                 }
             }
