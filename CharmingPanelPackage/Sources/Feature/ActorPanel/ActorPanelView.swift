@@ -30,7 +30,7 @@ struct ActorPanelView: View {
                             ForEach(store.latestTimerMinutes.indices, id: \.self) { index in
                                 let minute = store.latestTimerMinutes[index]
                                 Button("\(minute)m") {
-                                    store.send(.pomodoroTimer(.startTimer(endDate: .now.addingTimeInterval(Double(minute)))))
+                                    store.send(.pomodoroTimer(.startTimer(endDate: .now.addingTimeInterval(Double(minute * 60)))))
                                     store.send(.setLatestTimerMinute(minute))
                                 }
                             }

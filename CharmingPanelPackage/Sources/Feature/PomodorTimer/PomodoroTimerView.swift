@@ -28,6 +28,6 @@ struct PomodoroTimerView: View {
             return nil
         }
         return Text(timerInterval: time.startDate...time.endDate, countsDown: true, showsHours: false)
-            .font(.system(size: 19, weight: .bold))
+            .font(.system(size: 20, weight: .bold))
     }
 }
