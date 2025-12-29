@@ -100,7 +100,7 @@ final class ActorPanelController {
             guard let self else { return }
             let isShowMenu = store.isShowMenu
             guard isShowMenu else { return }
-            show()
+            show(forceActive: true)
         })
     }
     
@@ -135,9 +135,13 @@ final class ActorPanelController {
         }
     }
     
-    private func show() {
-        panel.orderFront(nil)
-        NSApp.activate(ignoringOtherApps: false)
+    private func show(forceActive: Bool = false) {
+        if forceActive {
+            panel.makeKeyAndOrderFront(nil)
+        } else {
+            panel.orderFront(nil)
+        }
+        NSApp.activate(ignoringOtherApps: forceActive)
     }
     
     private func hide() {
