@@ -15,112 +15,74 @@ struct ActorPanelView: View {
 
     @State var isLongPress = false
     @State var hoverAnimationProgress: Double = 0
+    @State var isHoverActor = false
     
     var body: some View {
         content
-            .contextMenu {
-                if store.pomodoroTimer.isTimerRunning {
-                    Button("Stop timer", systemImage: "stop.fill") {
-                        store.send(.pomodoroTimer(.stopTimer))
-                    }
-                } else {
-                    Menu("Start timer", systemImage: "gauge.with.needle") {
-                        if !store.latestTimerMinutes.isEmpty {
-                            Text("recent")
-                            ForEach(store.latestTimerMinutes.indices, id: \.self) { index in
-                                let minute = store.latestTimerMinutes[index]
-                                Button("\(minute)m") {
-                                    store.send(.pomodoroTimer(.startTimer(endDate: .now.addingTimeInterval(Double(minute * 60)))))
-                                    store.send(.setLatestTimerMinute(minute))
-                                }
-                            }
-
-                            Divider()
-                        }
-
-                        Menu("choose") {
-                            ForEach(1...12, id: \.self) { num in
-                                let minute = num * 5
-                                Button("\(minute)m") {
-                                    store.send(.pomodoroTimer(.startTimer(endDate: .now.addingTimeInterval(Double(minute * 60)))))
-                                    store.send(.setLatestTimerMinute(minute))
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                Divider()
-                
-                Button("\(store.state.cat.withAnimation ? "Stop" : "Start") animation", systemImage: "figure.run") {
-                    store.send(.toggleWithAnimation)
-                }
-                
-                Divider()
-                
-                Button("Hide panel", systemImage: "eye.slash") {
-                    store.send(.toggleHidden(to: true))
-                }
-            }
-            .onHover { isHover in
-                if !isHover,
-                   isLongPress {
-                    isLongPress = false
-                }
-            }
-            .onTapGesture {
-                if store.pomodoroTimer.isComplete {
-                    store.send(.pomodoroTimer(.stopTimer))
-                }
-            }
-            .onLongPressGesture(
-                minimumDuration: 1,
-                perform: { /** no operations */ },
-                onPressingChanged: { isPress in
-                    guard isPress,
-                          !store.pomodoroTimer.isComplete else {
-                        return
-                    }
-                    
-                    isLongPress = true
-                }
-            )
-            .gesture(
-                WindowDragGesture()
-                    .onEnded { _ in
-                        if isLongPress {
-                            isLongPress = false
-                        }
-                    }
-            )
             .onAppear {
                 store.send(.onAppear)
             }
             .onDisappear {
                 store.send(.onDisappear)
             }
-            .onChange(of: isLongPress) {
-                if isLongPress {
-                    store.send(.cat(.changeType(.pickUp)))
-                    return
-                }
-                if store.pomodoroTimer.isTimerRunning {
-                    store.send(.cat(.changeType(.hasTimer)))
-                    return
-                }
-                store.send(.cat(.changeType(.onBall)))
-            }
     }
     
     private var content: some View {
+        actorContent
+    }
+    
+    // MARK: Subviews
+    
+    private var actorContent: some View {
         ZStack {
             inputSourceLabel
             cat
             pomodoroTimer
         }
+        .onRightClick {
+            store.send(.toggleMenuHidden())
+        }
+        .onLongPressGesture(
+            minimumDuration: 1,
+            perform: { /** no operations */ },
+            onPressingChanged: { isPress in
+                guard isPress else {
+                    return
+                }
+                if store.pomodoroTimer.isComplete {
+                    store.send(.pomodoroTimer(.stopTimer))
+                    return
+                }
+                if store.isShowMenu {
+                    store.send(.toggleMenuHidden(to: true))
+                }
+                isLongPress = true
+            }
+        )
+        .onEndWindowDrag(disable: !canMovePanel) {
+            if isLongPress {
+                isLongPress = false
+            }
+        }
+        .onHover { isHover in
+            isHoverActor = isHover
+            if !isHover,
+               isLongPress {
+                isLongPress = false
+            }
+        }
+        .onChange(of: isLongPress) {
+            if isLongPress {
+                store.send(.cat(.changeType(.pickUp)))
+                return
+            }
+            if store.pomodoroTimer.isTimerRunning {
+                store.send(.cat(.changeType(.hasTimer)))
+                return
+            }
+            store.send(.cat(.changeType(.onBall)))
+        }
     }
-    
-    // MARK: Subviews
     
     private var pomodoroTimer: some View {
         PomodoroTimerView(
@@ -163,6 +125,15 @@ struct ActorPanelView: View {
         .clipShape(Circle())
     }
     
+    private var menuConetnt: some View {
+        ActorPanelMenuView(
+            store: store.scope(state: \.menu, action: \.menu)
+        )
+        .frame(width: ActorPanelMenuView.size.width - 4, height: ActorPanelMenuView.size.height - 4)
+        .offset(x: -6, y: 4)
+        .shadow(color: .black.opacity(0.2),radius: 4, x: 2, y: 2)
+    }
+    
     // MARK: Helpers
 
     private var shortLabel: String {
@@ -185,6 +156,13 @@ struct ActorPanelView: View {
         case .hiragana: .red
         }
     }
+    
+    var canMovePanel: Bool {
+        if store.isShowMenu {
+            return isHoverActor
+        }
+        return true
+    }
 }
 
 #Preview {
@@ -192,9 +170,8 @@ struct ActorPanelView: View {
         store: .init(
             initialState: {
                 var state = ActorPanel.State()
-                state.pomodoroTimer.time = .init(startDate: .now, endDate: .now.addingTimeInterval(3600))
-                state.pomodoroTimer.isComplete = true
-                state.cat.type = .completeTimer
+                state.cat.type = .onBall
+                state.isShowMenu = true
                 return state
             }()
         ) {
@@ -208,4 +185,3 @@ struct ActorPanelView: View {
         }
     )
 }
-

@@ -12,69 +12,47 @@ import ComposableArchitecture
 
 @MainActor
 final class ActorPanelController {
+    // MARK: - Property
     private let store: StoreOf<ActorPanel>
     
-    private let panel = NSPanel()
-    private var hostingView: NSHostingView<ActorPanelView>!
-    
+    private let actorPanel = NSPanel()
+    private var actorHostingView: NSHostingView<ActorPanelView>!
+
+    private var menuPanel: NSPanel?
+    private var menuHostingView: NSHostingView<ActorPanelMenuView>?
+
     private var observations: [ObserveToken] = []
+    
+    // MARK: - Initialize
     
     init(
         store: StoreOf<ActorPanel>
     ) {
         self.store = store
-        setup()
+        
+        setupActor()
         observeStore()
+        observeNotification()
     }
     
-    private func setup() {
-        panel.styleMask = .borderless
-        panel.backingType = .buffered
-        panel.isMovableByWindowBackground = true
-        panel.isReleasedWhenClosed = false
-        panel.hidesOnDeactivate = false
-        panel.backgroundColor = .clear
-        panel.hasShadow = false
-        panel.isOpaque = false
-
-        panel.level = .floating
-        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-
-        hostingView = NSHostingView(rootView: ActorPanelView(
-            store: store
-        ))
-        hostingView.translatesAutoresizingMaskIntoConstraints = false
-
-        let contentView = NSView()
-        contentView.wantsLayer = true
-        contentView.layer?.backgroundColor = NSColor.clear.cgColor
-        panel.contentView = contentView
-
-        contentView.addSubview(hostingView)
-
-        // hostingViewのサイズに合わせてcontentViewとpanelのサイズを設定
-        NSLayoutConstraint.activate([
-            hostingView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
-            hostingView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-        ])
-        
-        updatePanelSize()
+    deinit {
+        NotificationCenter.default.removeObserver(
+            self,
+            name: NSApplication.didResignActiveNotification,
+            object: nil
+        )
     }
+    
+    // MARK: - Observe
     
     private func observeStore() {
         observations.append(observe { [weak self] in
             guard let self else { return }
             if store.isHide {
-                hide()
+                hideAllPanel()
             } else {
-                show()
+                showActor()
             }
-        })
-        
-        observations.append(observe { [weak self] in
-            guard let self else { return }
-            _ = store.panelSize
-            updatePanelSize()
         })
         
         observations.append(observe { [weak self] in
@@ -82,39 +60,216 @@ final class ActorPanelController {
                   let movingPanelPosition = store.movingPanelPosition
             else { return }
             _ = store.movingPanelPosition
-            movePanel(to: movingPanelPosition.position, duration: movingPanelPosition.animationDuration)
+            moveActor(to: movingPanelPosition.position, duration: movingPanelPosition.animationDuration)
             store.send(.finishMovePanelPosition)
+        })
+        
+        observations.append(observe { [weak self] in
+            guard let self else { return }
+            let isShowMenu = store.isShowMenu
+            if isShowMenu {
+                showMenu()
+            } else {
+                hideMenu()
+            }
         })
     }
     
-    private func updatePanelSize() {
-        panel.setContentSize(store.panelSize)
+    private func observeNotification() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(didResignActive),
+            name: NSApplication.didResignActiveNotification,
+            object: nil
+        )
     }
     
-    private func movePanel(
+    @objc private func didResignActive(_ notification: Notification) {
+        store.send(.didResignActive)
+    }
+    
+    // MARK: - Actor
+    
+    private func setupActor() {
+        actorPanel.styleMask = .borderless
+        actorPanel.backingType = .buffered
+        actorPanel.isMovableByWindowBackground = false
+        actorPanel.isReleasedWhenClosed = false
+        actorPanel.hidesOnDeactivate = false
+        actorPanel.backgroundColor = .clear
+        actorPanel.hasShadow = false
+        actorPanel.isOpaque = false
+        
+        actorPanel.level = .floating
+        actorPanel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        
+        actorHostingView = NSHostingView(rootView: ActorPanelView(
+            store: store
+        ))
+        actorHostingView.translatesAutoresizingMaskIntoConstraints = false
+        
+        let contentView = NSView()
+        contentView.wantsLayer = true
+        contentView.layer?.backgroundColor = NSColor.clear.cgColor
+        actorPanel.contentView = contentView
+        
+        contentView.addSubview(actorHostingView)
+        
+        // hostingViewのサイズに合わせてcontentViewとpanelのサイズを設定
+        NSLayoutConstraint.activate([
+            actorHostingView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            actorHostingView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            actorHostingView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            actorHostingView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor)
+        ])
+    }
+    
+    private func moveActor(
         to location: CGPoint,
         duration: Double
     ) {
         let newLocation = CGPoint(
-            x: location.x - store.panelSize.width - 40,
-            y: location.y - store.panelSize.height / 2
+            x: location.x - actorPanel.frame.size.width / 2,
+            y: location.y - actorPanel.frame.size.height / 2
         )
-        let newFrame = CGRect(origin: newLocation, size: store.panelSize)
+        let newFrame = CGRect(origin: newLocation, size: actorPanel.frame.size)
         
         NSAnimationContext.runAnimationGroup { context in
             context.duration = duration
             context.timingFunction = CAMediaTimingFunction(name: .linear)
             
-            self.panel.animator().setFrame(newFrame, display: true)
+            self.actorPanel.animator().setFrame(newFrame, display: true)
         }
     }
     
-    private func show() {
-        panel.orderFront(nil)
-        NSApp.activate(ignoringOtherApps: false)
+    private func showActor(forceActive: Bool = false) {
+        if forceActive {
+            actorPanel.makeKeyAndOrderFront(nil)
+        } else {
+            actorPanel.orderFront(nil)
+        }
+        NSApp.activate(ignoringOtherApps: forceActive)
     }
     
-    private func hide() {
-        panel.orderOut(nil)
+    private func hideAllPanel() {
+        actorPanel.orderOut(nil)
+        store.send(.toggleMenuHidden(to: true))
+    }
+    
+    
+    // MARK: - Menu
+    
+    private func showMenu() {
+        // 既にメニューパネルが存在する場合はアクティブ化
+        if let menuPanel = menuPanel {
+            menuPanel.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        setupMenu()
+
+        let menuOrigin = calculateMenuPosition(
+            actorFrame: actorPanel.frame,
+            menuSize: ActorPanelMenuView.size
+        )
+        menuPanel?.setFrame(
+            CGRect(origin: menuOrigin, size: ActorPanelMenuView.size),
+            display: true
+        )
+
+        // パネルを表示
+        menuPanel?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+    
+    private func setupMenu() {
+        let newMenuPanel = NSPanel()
+        newMenuPanel.styleMask = .borderless
+        newMenuPanel.backingType = .buffered
+        newMenuPanel.isMovableByWindowBackground = false
+        newMenuPanel.isReleasedWhenClosed = false
+        newMenuPanel.hidesOnDeactivate = false
+        newMenuPanel.backgroundColor = .clear
+        newMenuPanel.hasShadow = true
+        newMenuPanel.isOpaque = false
+        newMenuPanel.level = .floating
+        newMenuPanel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+
+        let menuView = ActorPanelMenuView(
+            store: store.scope(state: \.menu, action: \.menu)
+        )
+        let newMenuHostingView = NSHostingView(rootView: menuView)
+        newMenuHostingView.translatesAutoresizingMaskIntoConstraints = false
+
+        let contentView = NSView()
+        contentView.wantsLayer = true
+        contentView.layer?.backgroundColor = NSColor.clear.cgColor
+        newMenuPanel.contentView = contentView
+
+        contentView.addSubview(newMenuHostingView)
+
+        NSLayoutConstraint.activate([
+            newMenuHostingView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            newMenuHostingView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            newMenuHostingView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            newMenuHostingView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            newMenuHostingView.widthAnchor.constraint(equalToConstant: ActorPanelMenuView.size.width),
+            newMenuHostingView.heightAnchor.constraint(equalToConstant: ActorPanelMenuView.size.height)
+        ])
+        
+        menuPanel = newMenuPanel
+        menuHostingView = newMenuHostingView
+    }
+
+    private func calculateMenuPosition(
+        actorFrame: CGRect,
+        menuSize: CGSize
+    ) -> CGPoint {
+        // actorPanelがあるスクリーンを取得
+        guard let screen = NSScreen.screens.first(where: { screen in
+            screen.frame.intersects(actorFrame)
+        }) else {
+            // スクリーンが見つからない場合はデフォルト位置(右側)
+            return CGPoint(
+                x: actorFrame.origin.x + actorFrame.width + 8,
+                y: actorFrame.origin.y
+            )
+        }
+
+        let visibleFrame = screen.visibleFrame
+        let spacing: CGFloat = 8
+
+        // 右側に配置した場合の座標を計算
+        var menuX = actorFrame.origin.x + actorFrame.width + spacing
+        var menuY = actorFrame.origin.y + actorFrame.height - menuSize.height - 8
+
+        // 右側に配置した場合にスクリーンからはみ出すかチェック
+        let menuRightEdge = menuX + menuSize.width
+        if menuRightEdge > visibleFrame.maxX {
+            // はみ出す場合は左側に配置
+            menuX = actorFrame.origin.x - menuSize.width - spacing
+        }
+
+        // 上端を合わせた位置で配置
+        // 上側にはみ出すかチェック
+        let menuTopEdge = menuY + menuSize.height
+        if menuTopEdge > visibleFrame.maxY {
+            // はみ出す場合は調整
+            menuY = visibleFrame.maxY - menuSize.height
+        }
+
+        // 下側にはみ出すかチェック
+        if menuY < visibleFrame.minY {
+            menuY = visibleFrame.minY
+        }
+
+        return CGPoint(x: menuX, y: menuY)
+    }
+
+    private func hideMenu() {
+        menuPanel?.orderOut(nil)
+        menuPanel = nil
+        menuHostingView = nil
     }
 }

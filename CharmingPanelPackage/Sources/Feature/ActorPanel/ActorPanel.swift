@@ -18,22 +18,21 @@ struct ActorPanel {
         var lastMouseLocation: (CGPoint, Date)?
 
         var isHide: Bool = false
+        var isShowMenu = false
         var withMove: Bool = false
 
         var latestTimerMinutes: [Int] = []
 
         var pomodoroTimer: PomodoroTimer.State = .init()
         var cat: Cat.State = .init()
-
-        var panelSize: CGSize {
-            ActorPanelView.size
-        }
+        var menu: ActorPanelMenu.State = .init()
     }
     
     enum Action {
         // Lifecycle
         case onAppear
         case onDisappear
+        case didResignActive
 
         // Store inputs
         case startObserveInputSource
@@ -48,6 +47,7 @@ struct ActorPanel {
 
         // View inputs
         case toggleHidden(to: Bool? = nil)
+        case toggleMenuHidden(to: Bool? = nil)
         case toggleWithAnimation
         case toggleWithMove
         case setLatestTimerMinute(Int)
@@ -58,6 +58,7 @@ struct ActorPanel {
         // Child reducer
         case pomodoroTimer(PomodoroTimer.Action)
         case cat(Cat.Action)
+        case menu(ActorPanelMenu.Action)
     }
     
     enum CancelID: String {
@@ -76,13 +77,17 @@ struct ActorPanel {
                 return .run { send in
                     await send(.startObserveInputSource)
                     await send(.startObserveHotKey)
-                    await send(.startObserveMouseLocation)
+                    // await send(.startObserveMouseLocation)
                 }
                 
             case .onDisappear:
                 return .run { _ in
                     await inputSource.stop()
                 }
+                
+            case .didResignActive:
+                state.isShowMenu = false
+                return .none
                 
             case .startObserveInputSource:
                 return .run { send in
@@ -144,6 +149,14 @@ struct ActorPanel {
                     state.isHide.toggle()
                 }
                 return .none
+                
+            case let .toggleMenuHidden(isHide):
+                if let isHide {
+                    state.isShowMenu = !isHide
+                } else {
+                    state.isShowMenu.toggle()
+                }
+                return .none
             
             case .toggleWithAnimation:
                 return .send(.cat(.toggleWithAnimation))
@@ -169,10 +182,9 @@ struct ActorPanel {
                     return .send(.cat(.changeType(.hasTimer)))
                     
                 case .completeTimer:
-                    let panelSize = state.panelSize
                     return .run { send in
                         await send(.cat(.changeType(.completeTimer)))
-                        await send(.cat(.changeAnimationInterval(0.07)))
+                        await send(.cat(.changeAnimationInterval(.quick)))
                         
                         let limitDate = self.date.now.addingTimeInterval(30)
                         for await _ in self.clock.timer(interval: .seconds(0.1)) {
@@ -181,25 +193,30 @@ struct ActorPanel {
                                 await send(.pomodoroTimer(.stopTimer))
                                 return
                             }
-                            let mouseLocation = NSEvent.mouseLocation
-                            let position = CGPoint(
-                                x: mouseLocation.x + 40 + panelSize.width / 2,
-                                y: mouseLocation.y
-                            )
-                            await send(.startMovePanelPosition(.init(position: position, animationDuration: 0.3)))
+                            await send(.startMovePanelPosition(.init(position: NSEvent.mouseLocation, animationDuration: 0.3)))
                         }
                     }
                     .cancellable(id: CancelID.moveCatOnCompleteTimer)
                 case .stopTimer:
                     return .run { send in
                         await send(.cat(.changeType(.onBall)))
-                        await send(.cat(.changeAnimationInterval(0.15)))
+                        await send(.cat(.changeAnimationInterval(.default)))
                         await send(.onStopTimer)
                     }
                 }
                 
             case .cat:
                 return .none
+                
+            case .menu(let action):
+                switch action {
+                case .onStartTimer(let intervalMinute):
+                    return .run { send in
+                        await send(.pomodoroTimer(.startTimer(endDate: .now.addingTimeInterval(Double(intervalMinute * 60)))))
+                        await send(.toggleMenuHidden(to: true))
+                    }
+                }
+                
             }
         }
         
@@ -209,6 +226,10 @@ struct ActorPanel {
         
         Scope(state: \.cat, action: \.cat) {
             Cat()
+        }
+        
+        Scope(state: \.menu, action: \.menu) {
+            ActorPanelMenu()
         }
     }
     
