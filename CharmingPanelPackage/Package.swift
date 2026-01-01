@@ -24,7 +24,8 @@ let package = Package(
                 .product(name: "ComposableArchitecture", package: "swift-composable-architecture")
             ],
             swiftSettings: [
-                .swiftLanguageMode(.v6)
+                .swiftLanguageMode(.v6),
+                .enableExperimentalFeature("StrictConcurrency")
             ]
         ),
     ]
