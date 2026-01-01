@@ -64,11 +64,11 @@ final class ActorPanelController {
         
         // hostingViewのサイズに合わせてcontentViewとpanelのサイズを設定
         NSLayoutConstraint.activate([
+            hostingView.topAnchor.constraint(equalTo: contentView.topAnchor),
             hostingView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
             hostingView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            hostingView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor)
         ])
-        
-        updatePanelSize()
     }
     
     private func observeStore() {
@@ -79,12 +79,6 @@ final class ActorPanelController {
             } else {
                 show()
             }
-        })
-        
-        observations.append(observe { [weak self] in
-            guard let self else { return }
-            _ = store.panelSize
-            updatePanelSize()
         })
         
         observations.append(observe { [weak self] in
@@ -113,19 +107,15 @@ final class ActorPanelController {
         )
     }
     
-    private func updatePanelSize() {
-        panel.setContentSize(store.panelSize)
-    }
-    
     private func movePanel(
         to location: CGPoint,
         duration: Double
     ) {
         let newLocation = CGPoint(
-            x: location.x - store.panelSize.width - 40,
-            y: location.y - store.panelSize.height / 2
+            x: location.x - panel.frame.size.width / 2,
+            y: location.y - panel.frame.size.height / 2
         )
-        let newFrame = CGRect(origin: newLocation, size: store.panelSize)
+        let newFrame = CGRect(origin: newLocation, size: panel.frame.size)
         
         NSAnimationContext.runAnimationGroup { context in
             context.duration = duration

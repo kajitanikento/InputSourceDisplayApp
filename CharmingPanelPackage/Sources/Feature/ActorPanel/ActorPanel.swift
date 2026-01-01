@@ -191,7 +191,6 @@ struct ActorPanel {
                     return .send(.cat(.changeType(.hasTimer)))
                     
                 case .completeTimer:
-                    let panelSize = state.panelSize
                     return .run { send in
                         await send(.cat(.changeType(.completeTimer)))
                         await send(.cat(.changeAnimationInterval(.quick)))
@@ -203,12 +202,7 @@ struct ActorPanel {
                                 await send(.pomodoroTimer(.stopTimer))
                                 return
                             }
-                            let mouseLocation = NSEvent.mouseLocation
-                            let position = CGPoint(
-                                x: mouseLocation.x + 40 + panelSize.width / 2,
-                                y: mouseLocation.y
-                            )
-                            await send(.startMovePanelPosition(.init(position: position, animationDuration: 0.3)))
+                            await send(.startMovePanelPosition(.init(position: NSEvent.mouseLocation, animationDuration: 0.3)))
                         }
                     }
                     .cancellable(id: CancelID.moveCatOnCompleteTimer)
