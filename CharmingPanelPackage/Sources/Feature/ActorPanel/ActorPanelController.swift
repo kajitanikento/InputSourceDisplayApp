@@ -169,11 +169,9 @@ final class ActorPanelController {
 
         setupMenu()
 
-        // メニューパネルの位置を計算（メインパネルの下に配置）
-        let mainPanelFrame = actorPanel.frame
-        let menuOrigin = CGPoint(
-            x: mainPanelFrame.origin.x + (mainPanelFrame.width - ActorPanelMenuView.size.width) / 2,
-            y: mainPanelFrame.origin.y - ActorPanelMenuView.size.height - 8
+        let menuOrigin = calculateMenuPosition(
+            actorFrame: actorPanel.frame,
+            menuSize: ActorPanelMenuView.size
         )
         menuPanel?.setFrame(
             CGRect(origin: menuOrigin, size: ActorPanelMenuView.size),
@@ -222,6 +220,51 @@ final class ActorPanelController {
         
         menuPanel = newMenuPanel
         menuHostingView = newMenuHostingView
+    }
+
+    private func calculateMenuPosition(
+        actorFrame: CGRect,
+        menuSize: CGSize
+    ) -> CGPoint {
+        // actorPanelがあるスクリーンを取得
+        guard let screen = NSScreen.screens.first(where: { screen in
+            screen.frame.intersects(actorFrame)
+        }) else {
+            // スクリーンが見つからない場合はデフォルト位置(右側)
+            return CGPoint(
+                x: actorFrame.origin.x + actorFrame.width + 8,
+                y: actorFrame.origin.y
+            )
+        }
+
+        let visibleFrame = screen.visibleFrame
+        let spacing: CGFloat = 8
+
+        // 右側に配置した場合の座標を計算
+        var menuX = actorFrame.origin.x + actorFrame.width + spacing
+        var menuY = actorFrame.origin.y + actorFrame.height - menuSize.height - 8
+
+        // 右側に配置した場合にスクリーンからはみ出すかチェック
+        let menuRightEdge = menuX + menuSize.width
+        if menuRightEdge > visibleFrame.maxX {
+            // はみ出す場合は左側に配置
+            menuX = actorFrame.origin.x - menuSize.width - spacing
+        }
+
+        // 上端を合わせた位置で配置
+        // 上側にはみ出すかチェック
+        let menuTopEdge = menuY + menuSize.height
+        if menuTopEdge > visibleFrame.maxY {
+            // はみ出す場合は調整
+            menuY = visibleFrame.maxY - menuSize.height
+        }
+
+        // 下側にはみ出すかチェック
+        if menuY < visibleFrame.minY {
+            menuY = visibleFrame.minY
+        }
+
+        return CGPoint(x: menuX, y: menuY)
     }
 
     private func hideMenu() {
