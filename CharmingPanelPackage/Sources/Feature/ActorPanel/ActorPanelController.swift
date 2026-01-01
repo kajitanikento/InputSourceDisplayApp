@@ -217,7 +217,7 @@ final class ActorPanelController {
 
         // アニメーション実行
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.2
+            context.duration = 0.1
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
 
             // フェードイン
@@ -317,23 +317,20 @@ final class ActorPanelController {
     private func hideMenu() {
         guard let panel = menuPanel else { return }
 
-        // アニメーション実行
+        // フェードアウトアニメーションを実行
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = 0.15
             context.timingFunction = CAMediaTimingFunction(name: .easeIn)
 
             // フェードアウト
             panel.animator().alphaValue = 0.0
-
-            // スケールダウン
-            if let contentView = panel.contentView {
-                contentView.layer?.transform = CATransform3DMakeScale(0.95, 0.95, 1.0)
-            }
         }, completionHandler: { [weak self] in
-            // アニメーション完了後にパネルを非表示
-            panel.orderOut(nil)
-            self?.menuPanel = nil
-            self?.menuHostingView = nil
+            Task { @MainActor in
+                // アニメーション完了後にパネルを非表示
+                panel.orderOut(nil)
+                self?.menuPanel = nil
+                self?.menuHostingView = nil
+            }
         })
     }
 }
