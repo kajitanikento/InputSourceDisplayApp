@@ -35,10 +35,18 @@ struct ActorPanelMenuView: View {
             "タイマー",
             ignoreContentHorizontalPadding: true
         ) {
-            VStack(alignment: .leading, spacing: 12) {
-                timerPresets
-                timerHistory
+            if let startedTimerTime = store.startedTimerTime {
+                timerStopContent(startedTimerTime: startedTimerTime)
+            } else {
+                timerStartContent
             }
+        }
+    }
+    
+    var timerStartContent: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            timerPresets
+            timerHistory
         }
     }
     
@@ -53,6 +61,7 @@ struct ActorPanelMenuView: View {
         }
     }
     
+    // TODO: impl
     var _history: [Int] {
         [
             25, 5
@@ -84,24 +93,21 @@ struct ActorPanelMenuView: View {
         foregroundColor: Color = .white,
         backgroundColor: Color = .gray
     ) -> some View {
-        Button(action: {
-            store.send(.onStartTimer(intervalMinute: intervalMinute))
-        }) {
-            ZStack {
-                backgroundColor
-                
+        circleButton(
+            action: {
+                store.send(.onStartTimer(time: .init(startDate: .now, intervalMinute: intervalMinute)))
+            },
+            label: {
                 HStack(alignment: .lastTextBaseline, spacing: 2) {
                     Text("\(intervalMinute)")
                         .font(.title2)
                     Text("分")
                         .font(.caption)
                 }
-            }
-            .foregroundStyle(foregroundColor)
-            .frame(width: 44, height: 44)
-        }
-        .buttonStyle(.plain)
-        .clipShape(Circle())
+            },
+            foregroundColor: foregroundColor,
+            backgroundColor: backgroundColor
+        )
     }
     
     var timerIntervalLabel: some View {
@@ -112,27 +118,26 @@ struct ActorPanelMenuView: View {
                 .font(.system(size: 20))
         }
     }
-
-    var timerControlButton: some View {
-        Button(action: {
-            // TODO: 開始/停止での制御
-            store.send(.onStartTimer(intervalMinute: sliderValue))
-        }) {
-            // TODO: 開始/停止でアイコンと色を変える
-            ZStack {
-                Color.blue
-                Image(systemName: "play.fill")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 18)
-                    // play.fillの時に完全に中央だと視覚的にずれて見えるので少しずらしている
-                    .offset(x: 2)
-            }
-            .foregroundStyle(.white)
-            .frame(width: 44, height: 44)
+    
+    func timerStopContent(startedTimerTime: PomodoroTimer.PomodoroTime) -> some View {
+        HStack(spacing: 12) {
+            Text(timerInterval: startedTimerTime.timeInterval, showsHours: false)
+            timerStopButton
         }
-        .buttonStyle(.plain)
-        .clipShape(Circle())
+        .padding(.horizontal, 16)
+    }
+    
+    var timerStopButton: some View {
+        circleButton(
+            action: {
+                store.send(.onStopTimer)
+            },
+            label: {
+                Text("停止")
+            },
+                   foregroundColor: .white,
+            backgroundColor: .blue
+        )
     }
     
     // MARK: Other menu
@@ -150,7 +155,7 @@ struct ActorPanelMenuView: View {
     func menuBlock<Content: View>(
         _ title: String,
         ignoreContentHorizontalPadding: Bool = false,
-        content: @escaping () -> Content
+        @ViewBuilder content: @escaping () -> Content
     ) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             Text(title)
@@ -164,6 +169,25 @@ struct ActorPanelMenuView: View {
         .padding(.vertical, 16)
         .background(.white)
         .clipShape(RoundedRectangle(cornerRadius: 20))
+    }
+    
+    func circleButton<Label: View>(
+        action: @escaping () -> Void,
+        label: @escaping () -> Label,
+        foregroundColor: Color = .white,
+        backgroundColor: Color = .gray
+    ) -> some View {
+        Button(action: action) {
+            ZStack {
+                backgroundColor
+                
+                label()
+            }
+            .foregroundStyle(foregroundColor)
+            .frame(width: 44, height: 44)
+        }
+        .buttonStyle(.plain)
+        .clipShape(Circle())
     }
 }
 

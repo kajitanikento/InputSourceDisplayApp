@@ -210,11 +210,18 @@ struct ActorPanel {
                 
             case .menu(let action):
                 switch action {
-                case .onStartTimer(let intervalMinute):
+                case .onStartTimer(let time):
                     return .run { send in
-                        await send(.pomodoroTimer(.startTimer(endDate: .now.addingTimeInterval(Double(intervalMinute * 60)))))
+                        await send(.pomodoroTimer(.startTimer(time: time)))
                         await send(.toggleMenuHidden(to: true))
                     }
+                    
+                case .onStopTimer:
+                    return .run { send in
+                        await send(.pomodoroTimer(.stopTimer))
+                        await send(.toggleMenuHidden(to: true))
+                    }
+                    
                 }
                 
             }

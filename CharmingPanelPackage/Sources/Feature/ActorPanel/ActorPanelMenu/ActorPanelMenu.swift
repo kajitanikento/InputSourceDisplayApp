@@ -13,20 +13,25 @@ struct ActorPanelMenu {
     
     @ObservableState
     struct State {
-        var startedTimerIntervalMinute: Int?
+        var startedTimerTime: PomodoroTimer.PomodoroTime?
     }
     
     enum Action {
-        case onStartTimer(intervalMinute: Int)
+        case onStartTimer(time: PomodoroTimer.PomodoroTime)
+        case onStopTimer
     }
+    
     
     var body: some Reducer<State, Action> {
         Reduce { state, action in
             switch action {
-            case .onStartTimer(let intervalMinute):
-                state.startedTimerIntervalMinute = intervalMinute
+            case .onStartTimer(let time):
+                state.startedTimerTime = time
                 return .none
                 
+            case .onStopTimer:
+                state.startedTimerTime = nil
+                return .none
             }
         }
     }
