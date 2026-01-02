@@ -10,10 +10,19 @@ import ComposableArchitecture
 
 struct ActorPanelMenuView: View {
     @Bindable var store: StoreOf<ActorPanelMenu>
+    // アクションを実行した後にメニューが消える前に表示が切り替わらないように固定値のStateを保持している
+    var stateForDisplay: ActorPanelMenu.State
     
-    @State var sliderValue: Int = 5
+    init(store: StoreOf<ActorPanelMenu>) {
+        self.store = store
+        self.stateForDisplay = store.state
+    }
     
     var body: some View {
+        content
+    }
+    
+    var content: some View {
         VStack {
             timerMenu
             
@@ -27,14 +36,12 @@ struct ActorPanelMenuView: View {
     
     // MARK: Timer menu
     
-    var rows: [GridItem] = Array(repeating: .init(.fixed(44)), count: 2)
-    
     var timerMenu: some View {
         menuBlock(
             "タイマー",
             ignoreContentHorizontalPadding: true
         ) {
-            if let startedTimerTime = store.startedTimerTime {
+            if let startedTimerTime = stateForDisplay.startedTimerTime {
                 timerStopContent(startedTimerTime: startedTimerTime)
             } else {
                 timerStartContent
@@ -46,7 +53,7 @@ struct ActorPanelMenuView: View {
         VStack(alignment: .leading, spacing: 12) {
             timerPresets
             
-            if store.timeIntervalMinuteHistory.isNotEmpty {
+            if stateForDisplay.timeIntervalMinuteHistory.isNotEmpty {
                 timerHistory
             }
         }
@@ -71,7 +78,7 @@ struct ActorPanelMenuView: View {
             
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
-                    ForEach(store.timeIntervalMinuteHistory, id: \.self) { interval in
+                    ForEach(stateForDisplay.timeIntervalMinuteHistory, id: \.self) { interval in
                         timerStartButton(
                             intervalMinute: interval,
                             backgroundColor: .orange
@@ -103,15 +110,6 @@ struct ActorPanelMenuView: View {
             foregroundColor: foregroundColor,
             backgroundColor: backgroundColor
         )
-    }
-    
-    var timerIntervalLabel: some View {
-        HStack(alignment: .lastTextBaseline) {
-            Text("\(sliderValue)")
-                .font(.system(size: 32, weight: .bold, design: .monospaced))
-            Text("分")
-                .font(.system(size: 20))
-        }
     }
     
     func timerStopContent(startedTimerTime: PomodoroTimer.PomodoroTime) -> some View {

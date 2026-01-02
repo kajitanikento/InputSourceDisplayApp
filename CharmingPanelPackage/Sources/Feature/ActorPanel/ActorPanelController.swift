@@ -153,6 +153,8 @@ final class ActorPanelController {
     
     private func hideActor() {
         actorPanel.orderOut(nil)
+        // Actorを非表示にする場合はメニューも一緒に非表示にする
+        hideMenu()
     }
     
     

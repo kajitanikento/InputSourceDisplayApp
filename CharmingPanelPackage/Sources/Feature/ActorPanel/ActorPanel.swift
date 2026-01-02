@@ -21,6 +21,7 @@ struct ActorPanel {
         
         var pomodoroTimer: PomodoroTimer.State = .init()
         var cat: Cat.State = .init()
+        
         var menu: ActorPanelMenu.State = .init()
     }
     
@@ -102,7 +103,7 @@ struct ActorPanel {
                     }
                     state.movingPanelPosition = .init(position: NSEvent.mouseLocation, animationDuration: 0.3)
                 case .toggleHidden:
-                    state.isPanelHidden.toggle()
+                    togglePanelHidden(state: &state)
                     
                 }
                 
@@ -121,11 +122,6 @@ struct ActorPanel {
                 
             case let .onClickTogglePanelHidden(isHide):
                 togglePanelHidden(to: isHide, state: &state)
-                
-                // パネルが非表示になった場合はメニューも非表示にする
-                if state.isPanelHidden {
-                    toggleMenuHidden(to: true, state: &state)
-                }
                 return .none
                 
             case .onRightClickActor:
@@ -210,6 +206,11 @@ struct ActorPanel {
             state.isPanelHidden = isHidden
         } else {
             state.isPanelHidden.toggle()
+        }
+        
+        // パネルが非表示になった場合はメニューも非表示にする
+        if state.isPanelHidden {
+            toggleMenuHidden(to: true, state: &state)
         }
     }
     
