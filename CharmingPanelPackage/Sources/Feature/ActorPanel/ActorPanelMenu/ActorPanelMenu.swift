@@ -17,19 +17,20 @@ struct ActorPanelMenu {
     }
     
     enum Action {
-        case onStartTimer(time: PomodoroTimer.PomodoroTime)
-        case onStopTimer
+        // View inputs
+        case onClickStartTimer(time: PomodoroTimer.PomodoroTime)
+        case onClickStopTimer
     }
     
     
     var body: some Reducer<State, Action> {
         Reduce { state, action in
             switch action {
-            case .onStartTimer(let time):
+            case .onClickStartTimer(let time):
                 state.startedTimerTime = time
                 return .none
                 
-            case .onStopTimer:
+            case .onClickStopTimer:
                 state.startedTimerTime = nil
                 return .none
             }

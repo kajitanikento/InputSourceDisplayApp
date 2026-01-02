@@ -56,11 +56,11 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func updateToggleHiddenMenuItemTitle() {
-        toggleHiddenMenuItem.title = "\(store.isHide ? "Show" : "Hide") panel"
+        toggleHiddenMenuItem.title = "\(store.isPanelHidden ? "Show" : "Hide") panel"
     }
     
     @objc private func togglePanel() {
-        store.send(.toggleHidden())
+        store.send(.onClickTogglePanelHidden())
         updateToggleHiddenMenuItemTitle()
     }
     

@@ -27,18 +27,9 @@ struct CatView: View {
             .scaledToFit()
             .onAppear(perform: startAnimation)
             .onDisappear(perform: stopAnimation)
-            .onChange(of: store.withAnimation) {
-                if store.withAnimation {
-                    startAnimation()
-                } else {
-                    stopAnimation()
-                }
-            }
     }
     
     func startAnimation() {
-        guard store.withAnimation else { return }
-        
         animationTask?.cancel()
         animationTask = Task {
             while !Task.isCancelled {

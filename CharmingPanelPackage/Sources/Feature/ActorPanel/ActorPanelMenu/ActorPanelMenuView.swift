@@ -95,7 +95,7 @@ struct ActorPanelMenuView: View {
     ) -> some View {
         circleButton(
             action: {
-                store.send(.onStartTimer(time: .init(startDate: .now, intervalMinute: intervalMinute)))
+                store.send(.onClickStartTimer(time: .init(startDate: .now, intervalMinute: intervalMinute)))
             },
             label: {
                 HStack(alignment: .lastTextBaseline, spacing: 2) {
@@ -130,7 +130,7 @@ struct ActorPanelMenuView: View {
     var timerStopButton: some View {
         circleButton(
             action: {
-                store.send(.onStopTimer)
+                store.send(.onClickStopTimer)
             },
             label: {
                 Text("停止")

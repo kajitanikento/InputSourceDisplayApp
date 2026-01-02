@@ -48,8 +48,8 @@ final class ActorPanelController {
     private func observeStore() {
         observations.append(observe { [weak self] in
             guard let self else { return }
-            if store.isHide {
-                hideAllPanel()
+            if store.isPanelHidden {
+                hideActor()
             } else {
                 showActor()
             }
@@ -151,9 +151,8 @@ final class ActorPanelController {
         NSApp.activate(ignoringOtherApps: forceActive)
     }
     
-    private func hideAllPanel() {
+    private func hideActor() {
         actorPanel.orderOut(nil)
-        store.send(.toggleMenuHidden(to: true))
     }
     
     

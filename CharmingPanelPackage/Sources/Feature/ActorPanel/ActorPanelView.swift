@@ -40,7 +40,7 @@ struct ActorPanelView: View {
             pomodoroTimer
         }
         .onRightClick {
-            store.send(.toggleMenuHidden())
+            store.send(.onRightClickActor)
         }
         .onLongPressGesture(
             minimumDuration: 1,
@@ -49,13 +49,7 @@ struct ActorPanelView: View {
                 guard isPress else {
                     return
                 }
-                if store.pomodoroTimer.isComplete {
-                    store.send(.pomodoroTimer(.stopTimer))
-                    return
-                }
-                if store.isShowMenu {
-                    store.send(.toggleMenuHidden(to: true))
-                }
+                store.send(.onLongPressActor)
                 isLongPress = true
             }
         )

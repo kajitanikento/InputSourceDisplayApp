@@ -15,13 +15,11 @@ struct Cat {
     struct State {
         var type: CatType = .onBall
         var animationInterval: AnimationInterval = .default
-        var withAnimation: Bool = true
     }
     
     enum Action {
         case changeType(CatType)
         case changeAnimationInterval(AnimationInterval)
-        case toggleWithAnimation
     }
     
     var body: some Reducer<State, Action> {
@@ -35,9 +33,6 @@ struct Cat {
                 state.animationInterval = interval
                 return .none
                 
-            case . toggleWithAnimation:
-                state.withAnimation.toggle()
-                return .none
             }
         }
     }

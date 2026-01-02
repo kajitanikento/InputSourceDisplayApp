@@ -15,14 +15,10 @@ struct ActorPanel {
     struct State {
         var currentInputSource: InputSource = .abc
         var movingPanelPosition: MovePanelInfo?
-        var lastMouseLocation: (CGPoint, Date)?
 
-        var isHide: Bool = false
+        var isPanelHidden: Bool = false
         var isShowMenu = false
-        var withMove: Bool = false
-
-        var latestTimerMinutes: [Int] = []
-
+        
         var pomodoroTimer: PomodoroTimer.State = .init()
         var cat: Cat.State = .init()
         var menu: ActorPanelMenu.State = .init()
@@ -37,23 +33,18 @@ struct ActorPanel {
         // Store inputs
         case startObserveInputSource
         case startObserveHotKey
-        case startObserveMouseLocation
-        case mouseLocationTimerTicked
-        case updateLastMouseLocation(CGPoint, Date)
         case startMovePanelPosition(MovePanelInfo)
         case finishMovePanelPosition
         case onPressHotKey(HotKey)
         case onStopTimer
 
         // View inputs
-        case toggleHidden(to: Bool? = nil)
-        case toggleMenuHidden(to: Bool? = nil)
-        case toggleWithAnimation
-        case toggleWithMove
-        case setLatestTimerMinute(Int)
+        case onClickTogglePanelHidden(to: Bool? = nil)
+        case onRightClickActor
+        case onLongPressActor
 
         // Dependency inputs
-        case changeInputSource(InputSource)
+        case onChangeInputSource(InputSource)
 
         // Child reducer
         case pomodoroTimer(PomodoroTimer.Action)
@@ -92,7 +83,7 @@ struct ActorPanel {
             case .startObserveInputSource:
                 return .run { send in
                     for await newSouce in await self.inputSource.stream() {
-                        await send(.changeInputSource(newSouce))
+                        await send(.onChangeInputSource(newSouce))
                     }
                 }
                 
@@ -103,29 +94,15 @@ struct ActorPanel {
                     }
                 }
                 
-            case .startObserveMouseLocation:
-                return .run { send in
-                    for await _ in self.clock.timer(interval: .seconds(1)) {
-                        await send(.mouseLocationTimerTicked)
-                    }
-                }
-                
-            case .mouseLocationTimerTicked:
-                return handleMouseLocationTimerTicked(state: &state)
-                
-            case let .updateLastMouseLocation(location, date):
-                state.lastMouseLocation = (location, date)
-                return .none
-                
             case let .onPressHotKey(hotKey):
                 switch hotKey {
                 case .callCat:
-                    if state.isHide {
-                        state.isHide = false
+                    if state.isPanelHidden {
+                        state.isPanelHidden = false
                     }
                     state.movingPanelPosition = .init(position: NSEvent.mouseLocation, animationDuration: 0.3)
                 case .toggleHidden:
-                    state.isHide.toggle()
+                    state.isPanelHidden.toggle()
                     
                 }
                 
@@ -142,37 +119,30 @@ struct ActorPanel {
                 state.movingPanelPosition = nil
                 return .none
                 
-            case let .toggleHidden(isHide):
-                if let isHide {
-                    state.isHide = isHide
-                } else {
-                    state.isHide.toggle()
+            case let .onClickTogglePanelHidden(isHide):
+                togglePanelHidden(to: isHide, state: &state)
+                
+                // パネルが非表示になった場合はメニューも非表示にする
+                if state.isPanelHidden {
+                    toggleMenuHidden(to: true, state: &state)
                 }
                 return .none
                 
-            case let .toggleMenuHidden(isHide):
-                if let isHide {
-                    state.isShowMenu = !isHide
-                } else {
-                    state.isShowMenu.toggle()
-                }
+            case .onRightClickActor:
+                toggleMenuHidden(to: false, state: &state)
                 return .none
-            
-            case .toggleWithAnimation:
-                return .send(.cat(.toggleWithAnimation))
                 
-            case .toggleWithMove:
-                state.withMove.toggle()
-                return .none
-
-            case let .setLatestTimerMinute(minute):
-                state.latestTimerMinutes.insert(minute, at: 0)
-                if state.latestTimerMinutes.count > 2 {
-                    state.latestTimerMinutes.removeLast()
+            case .onLongPressActor:
+                if state.pomodoroTimer.isComplete {
+                    return .send(.pomodoroTimer(.stopTimer))
+                }
+                
+                if state.isShowMenu {
+                    toggleMenuHidden(to: true, state: &state)
                 }
                 return .none
 
-            case let .changeInputSource(source):
+            case let .onChangeInputSource(source):
                 state.currentInputSource = source
                 return .none
                 
@@ -209,21 +179,16 @@ struct ActorPanel {
                 return .none
                 
             case .menu(let action):
-                switch action {
-                case .onStartTimer(let time):
-                    return .run { send in
-                        await send(.pomodoroTimer(.startTimer(time: time)))
-                        await send(.toggleMenuHidden(to: true))
-                    }
-                    
-                case .onStopTimer:
-                    return .run { send in
-                        await send(.pomodoroTimer(.stopTimer))
-                        await send(.toggleMenuHidden(to: true))
-                    }
-                    
-                }
+                // menuのアクションが実行されたらメニューを非表示にする
+                toggleMenuHidden(to: true, state: &state)
                 
+                switch action {
+                case .onClickStartTimer(let time):
+                    return .send(.pomodoroTimer(.startTimer(time: time)))
+                    
+                case .onClickStopTimer:
+                    return .send(.pomodoroTimer(.stopTimer))
+                }
             }
         }
         
@@ -240,26 +205,20 @@ struct ActorPanel {
         }
     }
     
-    private func handleMouseLocationTimerTicked(state: inout State) -> Effect<ActorPanel.Action> {
-        guard state.withMove else {
-            return .none
+    private func togglePanelHidden(to isHidden: Bool?, state: inout State) {
+        if let isHidden {
+            state.isPanelHidden = isHidden
+        } else {
+            state.isPanelHidden.toggle()
         }
-        
-        let currentMouseLocation = NSEvent.mouseLocation
-        guard let beforeMouseLocation = state.lastMouseLocation else {
-            return .send(.updateLastMouseLocation(currentMouseLocation, date.now))
+    }
+    
+    private func toggleMenuHidden(to isHidden: Bool?, state: inout State) {
+        if let isHidden {
+            state.isShowMenu = !isHidden
+        } else {
+            state.isShowMenu.toggle()
         }
-        if beforeMouseLocation.0 != currentMouseLocation {
-            return .send(.updateLastMouseLocation(currentMouseLocation, date.now))
-        }
-        // マウスポインタが一定時間同じ場所で止まっていたら寄っていく
-        if date.now.timeIntervalSince(beforeMouseLocation.1) > 30 {
-            return .run { send in
-                await send(.startMovePanelPosition(.init(position: currentMouseLocation)))
-                await send(.updateLastMouseLocation(currentMouseLocation, date.now))
-            }
-        }
-        return .none
     }
 }
 
