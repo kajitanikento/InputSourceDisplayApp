@@ -29,7 +29,7 @@ struct ActorPanelMenuView: View {
             
             Spacer()
         }
-        .frame(width: 280)
+        .frame(width: menuMaxWidth)
         .padding(4)
     }
     
@@ -131,7 +131,7 @@ struct ActorPanelMenuView: View {
                 Image(systemName: "stop.fill")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 16)
+                    .frame(width: 14)
             },
                    foregroundColor: .white,
             backgroundColor: .blue
@@ -142,13 +142,12 @@ struct ActorPanelMenuView: View {
     
     var menuTiles: some View {
         HStack {
-            LazyVGrid(columns: Array(repeating: .init(), count: 4), alignment: .leading, spacing: 8) {
+            LazyVGrid(columns: Array(repeating: .init(), count: tileColumnCount), alignment: .leading, spacing: 8) {
                 hidePanelTile
                 quitAppTile
             }
-            .frame(width: tileWidth * 4 + tileSpacing * 3)
             
-            Spacer()
+            Spacer(minLength: 0)
         }
     }
     
@@ -180,9 +179,14 @@ struct ActorPanelMenuView: View {
         .help("アプリを終了")
     }
     
-    var tileWidth: CGFloat { 48 }
+    var tileColumnCount: Int { 4 }
     var tileSpacing: CGFloat { 8 }
-    
+    var tileWidth: CGFloat {
+        // 280 / 4 = 70
+        // 8 * 3 = 24
+        // 70 - 24 = 46
+        menuMaxWidth / CGFloat(tileColumnCount) - tileSpacing * CGFloat(tileColumnCount - 1) / CGFloat(tileColumnCount)
+    }
     func menuTile<Content: View>(
         action: @escaping () -> Void,
         foregroundColor: Color = .black,
@@ -203,6 +207,10 @@ struct ActorPanelMenuView: View {
     }
     
     // MARK: Common
+    
+    var menuMaxWidth: CGFloat {
+        256
+    }
     
     func menuBlock<Content: View>(
         _ title: String,
