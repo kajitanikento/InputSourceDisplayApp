@@ -73,7 +73,7 @@ extension CatType {
         case .pickUp:
             makeFrames(name: "CatPickUp", count: 2)
         case .think:
-            makeFrames(name: "CatThink", count: 3)
+            makeFrames(name: "CatThink", count: 1)
         }
     }
     

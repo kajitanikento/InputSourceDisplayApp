@@ -74,7 +74,6 @@ struct ActorPanel {
                 return .run { send in
                     await send(.startObserveInputSource)
                     await send(.startObserveHotKey)
-                    // await send(.startObserveMouseLocation)
                 }
                 
             case .onDisappear:
