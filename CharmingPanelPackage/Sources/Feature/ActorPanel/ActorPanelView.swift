@@ -13,9 +13,7 @@ struct ActorPanelView: View {
     
     @Bindable var store: StoreOf<ActorPanel>
 
-    @State var isLongPress = false
     @State var hoverAnimationProgress: Double = 0
-    @State var isHoverActor = false
     
     var body: some View {
         content
@@ -50,35 +48,14 @@ struct ActorPanelView: View {
             minimumDuration: 1,
             perform: { /** no operations */ },
             onPressingChanged: { isPress in
-                guard isPress else {
-                    return
-                }
-                store.send(.onLongPressActor)
-                isLongPress = true
+                store.send(.onLongPressActor(isPress))
             }
         )
         .onEndWindowDrag(disable: !canMovePanel) {
-            if isLongPress {
-                isLongPress = false
-            }
+            store.send(.onEndWindowDrag)
         }
         .onHover { isHover in
-            isHoverActor = isHover
-            if !isHover,
-               isLongPress {
-                isLongPress = false
-            }
-        }
-        .onChange(of: isLongPress) {
-            if isLongPress {
-                store.send(.cat(.changeType(.pickUp)))
-                return
-            }
-            if store.pomodoroTimer.isTimerRunning {
-                store.send(.cat(.changeType(.hasTimer)))
-                return
-            }
-            store.send(.cat(.changeType(.onBall)))
+            store.send(.onHoverActor(isHover))
         }
     }
     
@@ -87,7 +64,6 @@ struct ActorPanelView: View {
             store: store.scope(state: \.pomodoroTimer, action: \.pomodoroTimer)
         )
         .offset(y: -20)
-        .opacity(isLongPress ? 0 : 1)
     }
     
     private var cat: some View {
@@ -108,7 +84,6 @@ struct ActorPanelView: View {
         }
         .frame(height: Self.size.height)
         .shadow(color: .black.opacity(0.2),radius: 4, x: 2, y: 2)
-        .opacity(isLongPress ? 0 : 1)
     }
     
     private var _inputSourceLabel: some View {
@@ -146,24 +121,37 @@ struct ActorPanelView: View {
     }
     
     private var canMovePanel: Bool {
-        if store.isShowMenu {
+        store.canMovePanel
+    }
+    
+    private var isShowInputSourceLabel: Bool {
+        store.cat.type.shouldShowInputSource
+    }
+    
+    private var isShowTimerLabel: Bool {
+        store.cat.type.shouldShowTimer
+    }
+}
+
+extension ActorPanel.State {
+    var canMovePanel: Bool {
+        if isShowMenu {
             return isHoverActor
         }
         return true
     }
-    
-    private var isShowInputSourceLabel: Bool {
-        store.cat.type != .pickUp
+}
+
+extension CatType {
+    var shouldShowInputSource: Bool {
+        self != .pickUp
     }
     
-    private var isShowTimerLabel: Bool {
-        if isLongPress {
-            return false
+    var shouldShowTimer: Bool {
+        switch self {
+        case .pickUp, .think: false
+        default: true
         }
-        if store.cat.type == .think {
-            return false
-        }
-        return true
     }
 }
 

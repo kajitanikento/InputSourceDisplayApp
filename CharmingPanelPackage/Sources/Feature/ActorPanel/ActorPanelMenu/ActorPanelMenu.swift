@@ -21,6 +21,9 @@ struct ActorPanelMenu {
         // View inputs
         case onClickStartTimer(time: PomodoroTimer.PomodoroTime)
         case onClickStopTimer
+        
+        // Store inputs
+        case stopTimer
     }
     
     
@@ -33,7 +36,11 @@ struct ActorPanelMenu {
                 return .none
                 
             case .onClickStopTimer:
-                state.startedTimerTime = nil
+                stopTimer(state: &state)
+                return .none
+                
+            case .stopTimer:
+                stopTimer(state: &state)
                 return .none
             }
         }
@@ -51,5 +58,9 @@ struct ActorPanelMenu {
         if state.timeIntervalMinuteHistory.count > 5 {
             state.timeIntervalMinuteHistory.removeLast()
         }
+    }
+    
+    private func stopTimer(state: inout State) {
+        state.startedTimerTime = nil
     }
 }

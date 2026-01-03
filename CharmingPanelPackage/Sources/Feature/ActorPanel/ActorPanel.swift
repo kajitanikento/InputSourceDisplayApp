@@ -19,6 +19,9 @@ struct ActorPanel {
         var isPanelHidden: Bool = false
         var isShowMenu = false
         
+        var isLongPress = false
+        var isHoverActor = false
+        
         var pomodoroTimer: PomodoroTimer.State = .init()
         var cat: Cat.State = .init()
         
@@ -42,7 +45,9 @@ struct ActorPanel {
         // View inputs
         case onClickTogglePanelHidden(to: Bool? = nil)
         case onRightClickActor
-        case onLongPressActor
+        case onLongPressActor(Bool)
+        case onHoverActor(Bool)
+        case onEndWindowDrag
 
         // Dependency inputs
         case onChangeInputSource(InputSource)
@@ -128,13 +133,34 @@ struct ActorPanel {
                 toggleMenuHidden(state: &state)
                 return .none
                 
-            case .onLongPressActor:
+            case .onLongPressActor(let isLongPress):
+                updateLongPress(to: isLongPress, state: &state)
+                
+                guard isLongPress else {
+                    return .none
+                }
+                
                 if state.pomodoroTimer.isComplete {
                     return .send(.pomodoroTimer(.stopTimer))
                 }
                 
                 if state.isShowMenu {
                     toggleMenuHidden(to: true, state: &state)
+                }
+                return .none
+                
+            case .onHoverActor(let isHover):
+                state.isHoverActor = isHover
+                if !isHover,
+                   state.isLongPress {
+                    updateLongPress(to: false, state: &state)
+                }
+                
+                return .none
+                
+            case .onEndWindowDrag:
+                if state.isLongPress {
+                    state.isLongPress = false
                 }
                 return .none
 
@@ -168,6 +194,7 @@ struct ActorPanel {
                         await send(.cat(.changeType(.onBall)))
                         await send(.cat(.changeAnimationInterval(.default)))
                         await send(.onStopTimer)
+                        await send(.menu(.stopTimer))
                     }
                 }
                 
@@ -184,6 +211,9 @@ struct ActorPanel {
                     
                 case .onClickStopTimer:
                     return .send(.pomodoroTimer(.stopTimer))
+                    
+                default:
+                    return .none
                 }
             }
         }
@@ -225,7 +255,17 @@ struct ActorPanel {
         updateCatType(state: &state)
     }
     
+    private func updateLongPress(to isLongPress: Bool, state: inout State) {
+        state.isLongPress = isLongPress
+        
+        updateCatType(state: &state)
+    }
+    
     private func updateCatType(state: inout State) {
+        if state.isLongPress {
+            state.cat.type = .pickUp
+            return
+        }
         if state.isShowMenu {
             state.cat.type = .think
             return
