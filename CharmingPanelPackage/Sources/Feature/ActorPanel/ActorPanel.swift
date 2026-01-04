@@ -19,13 +19,15 @@ struct ActorPanel {
         var isPanelHidden = false
         var isShowMenu = false
         var shouldQuitApp = false
-        
+
         var isLongPress = false
         var isHoverActor = false
-        
+
+        var isPlayingDisappearAnimation = false
+
         var pomodoroTimer: PomodoroTimer.State = .init()
         var cat: Cat.State = .init()
-        
+
         var menu: ActorPanelMenu.State = .init()
     }
     
@@ -52,6 +54,10 @@ struct ActorPanel {
         case onLongPressActor(Bool)
         case onHoverActor(Bool)
         case onEndWindowDrag
+
+        // Disappear animation
+        case startDisappearAnimation
+        case finishDisappearAnimation
 
         // Dependency inputs
         case onChangeInputSource(InputSource)
@@ -180,6 +186,15 @@ struct ActorPanel {
                 }
                 return .none
 
+            case .startDisappearAnimation:
+                state.isPlayingDisappearAnimation = true
+                return .none
+
+            case .finishDisappearAnimation:
+                state.isPlayingDisappearAnimation = false
+                state.isPanelHidden = true
+                return .none
+
             case let .onChangeInputSource(source):
                 state.currentInputSource = source
                 return .none
@@ -259,17 +274,23 @@ struct ActorPanel {
     }
     
     // MARK: Helpers
-    
+
     private func togglePanelHidden(to isHidden: Bool? = nil, state: inout State) {
+        let shouldHide: Bool
         if let isHidden {
-            state.isPanelHidden = isHidden
+            shouldHide = isHidden
         } else {
-            state.isPanelHidden.toggle()
+            shouldHide = !state.isPanelHidden
         }
-        
-        // パネルが非表示になった場合はメニューも非表示にする
-        if state.isPanelHidden {
+
+        if shouldHide {
+            // 非表示にする場合はパーティクルアニメーションを開始
+            state.isPlayingDisappearAnimation = true
             toggleMenuHidden(to: true, state: &state)
+        } else {
+            // 表示する場合は通常通り
+            state.isPanelHidden = false
+            state.isPlayingDisappearAnimation = false
         }
     }
     
