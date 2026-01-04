@@ -26,20 +26,18 @@ struct ActorPanelView: View {
     }
     
     private var content: some View {
-        ZStack {
-            if !store.isPlayingDisappearAnimation {
-                actorContent
-            }
-
+        Group {
             if store.isPlayingDisappearAnimation {
                 ParticleDisappearEffect(
-                    particleCount: 80,
                     duration: 1.2,
                     onComplete: {
                         store.send(.finishDisappearAnimation)
                     }
-                )
-                .frame(width: Self.size.width, height: Self.size.height)
+                ) {
+                    actorContent
+                }
+            } else {
+                actorContent
             }
         }
     }
