@@ -47,7 +47,7 @@ struct CatView: View {
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(store.animationInterval.value))
                 guard !Task.isCancelled else { return }
-                if frameIndex == frames.count - 1 {
+                if frameIndex >= frames.count - 1 {
                     frameIndex = 0
                     continue
                 }
