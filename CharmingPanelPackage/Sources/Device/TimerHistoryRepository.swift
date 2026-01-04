@@ -1,5 +1,5 @@
 //
-//  TimerHistoryStorage.swift
+//  TimerHistoryRepository.swift
 //  CharmingPanel
 //
 //  Created by claude on 2026/01/04.
@@ -12,37 +12,37 @@ import DependenciesMacros
 // MARK: - define dependency interface
 
 @DependencyClient
-struct TimerHistoryStorage {
+struct TimerHistoryRepository {
     var load: @Sendable () -> [Int] = { [] }
     var save: @Sendable ([Int]) -> Void
 }
 
 extension DependencyValues {
-    var timerHistoryStorage: TimerHistoryStorage {
-        get { self[TimerHistoryStorage.self] }
-        set { self[TimerHistoryStorage.self] = newValue }
+    var timerHistoryRepository: TimerHistoryRepository {
+        get { self[TimerHistoryRepository.self] }
+        set { self[TimerHistoryRepository.self] = newValue }
     }
 }
 
-extension TimerHistoryStorage: DependencyKey, Sendable {
+extension TimerHistoryRepository: DependencyKey, Sendable {
 
-    static var liveValue: TimerHistoryStorage {
+    static var liveValue: TimerHistoryRepository {
         .init(
             load: {
-                TimerHistoryStorageLive.load()
+                TimerHistoryRepositoryLive.load()
             },
             save: { history in
-                TimerHistoryStorageLive.save(history)
+                TimerHistoryRepositoryLive.save(history)
             }
         )
     }
 
-    static let previewValue: TimerHistoryStorage = .init(
+    static let previewValue: TimerHistoryRepository = .init(
         load: { [] },
         save: { _ in }
     )
 
-    static let testValue: TimerHistoryStorage = .init(
+    static let testValue: TimerHistoryRepository = .init(
         load: { [] },
         save: { _ in }
     )
@@ -50,7 +50,7 @@ extension TimerHistoryStorage: DependencyKey, Sendable {
 
 // MARK: - define live
 
-enum TimerHistoryStorageLive {
+enum TimerHistoryRepositoryLive {
     private static let userDefaultsKey = "timerIntervalMinuteHistory"
 
     static func load() -> [Int] {

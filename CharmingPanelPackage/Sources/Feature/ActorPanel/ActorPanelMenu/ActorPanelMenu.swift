@@ -32,7 +32,7 @@ struct ActorPanelMenu {
         case loadHistory
     }
 
-    @Dependency(\.timerHistoryStorage) var timerHistoryStorage
+    @Dependency(\.timerHistoryRepository) var timerHistoryRepository
 
     var body: some Reducer<State, Action> {
         Reduce { state, action in
@@ -41,7 +41,7 @@ struct ActorPanelMenu {
                 return .send(.loadHistory)
 
             case .loadHistory:
-                state.timeIntervalMinuteHistory = timerHistoryStorage.load()
+                state.timeIntervalMinuteHistory = timerHistoryRepository.load()
                 return .none
 
             case .onClickStartTimer(let time):
@@ -86,6 +86,6 @@ struct ActorPanelMenu {
     }
 
     private func saveHistory(state: State) {
-        timerHistoryStorage.save(state.timeIntervalMinuteHistory)
+        timerHistoryRepository.save(state.timeIntervalMinuteHistory)
     }
 }
