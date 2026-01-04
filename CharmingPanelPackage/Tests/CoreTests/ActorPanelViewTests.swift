@@ -5,23 +5,18 @@
 //  Created by Claude on 2026/01/04.
 //
 
-import XCTest
+import Testing
 import SwiftUI
 import SnapshotTesting
 import ComposableArchitecture
 @testable import Core
 
 @MainActor
-final class ActorPanelViewTests: XCTestCase {
-
-    override func setUp() {
-        super.setUp()
-        // スナップショットテストのデバイス設定を統一
-        // isRecording = true // 初回実行時や基準画像を更新したい場合はコメント解除
-    }
+final class ActorPanelViewTests {
 
     // MARK: - 基本的なビューテスト
 
+    @Test
     func testActorPanelView_withDefaultState() {
         let store = Store(initialState: ActorPanel.State()) {
             ActorPanel()
@@ -33,10 +28,11 @@ final class ActorPanelViewTests: XCTestCase {
 
         let view = ActorPanelView(store: store)
             .frame(width: ActorPanelView.size.width, height: ActorPanelView.size.height)
-
-        assertSnapshot(of: view, as: .image(layout: .fixed(width: 120, height: 170)))
+        
+        assertSnapshot(of: view, as: .image)
     }
 
+    @Test
     func testActorPanelView_withHiraganaInputSource() {
         let store = Store(initialState: ActorPanel.State(currentInputSource: .hiragana)) {
             ActorPanel()
@@ -49,9 +45,10 @@ final class ActorPanelViewTests: XCTestCase {
         let view = ActorPanelView(store: store)
             .frame(width: ActorPanelView.size.width, height: ActorPanelView.size.height)
 
-        assertSnapshot(of: view, as: .image(layout: .fixed(width: 120, height: 170)))
+        assertSnapshot(of: view, as: .image)
     }
 
+    @Test
     func testActorPanelView_withKatakanaInputSource() {
         let store = Store(initialState: ActorPanel.State(currentInputSource: .katakana)) {
             ActorPanel()
@@ -64,9 +61,10 @@ final class ActorPanelViewTests: XCTestCase {
         let view = ActorPanelView(store: store)
             .frame(width: ActorPanelView.size.width, height: ActorPanelView.size.height)
 
-        assertSnapshot(of: view, as: .image(layout: .fixed(width: 120, height: 170)))
+        assertSnapshot(of: view, as: .image)
     }
 
+    @Test
     func testActorPanelView_withKoreanInputSource() {
         let store = Store(initialState: ActorPanel.State(currentInputSource: .korean)) {
             ActorPanel()
@@ -79,9 +77,10 @@ final class ActorPanelViewTests: XCTestCase {
         let view = ActorPanelView(store: store)
             .frame(width: ActorPanelView.size.width, height: ActorPanelView.size.height)
 
-        assertSnapshot(of: view, as: .image(layout: .fixed(width: 120, height: 170)))
+        assertSnapshot(of: view, as: .image)
     }
 
+    @Test
     func testActorPanelView_withChineseSimplifiedInputSource() {
         let store = Store(initialState: ActorPanel.State(currentInputSource: .chineseSimplified)) {
             ActorPanel()
@@ -94,11 +93,12 @@ final class ActorPanelViewTests: XCTestCase {
         let view = ActorPanelView(store: store)
             .frame(width: ActorPanelView.size.width, height: ActorPanelView.size.height)
 
-        assertSnapshot(of: view, as: .image(layout: .fixed(width: 120, height: 170)))
+        assertSnapshot(of: view, as: .image)
     }
 
     // MARK: - 猫のタイプ別テスト
 
+    @Test
     func testActorPanelView_withThinkCatType() {
         var state = ActorPanel.State()
         state.cat.type = .think
@@ -115,9 +115,10 @@ final class ActorPanelViewTests: XCTestCase {
         let view = ActorPanelView(store: store)
             .frame(width: ActorPanelView.size.width, height: ActorPanelView.size.height)
 
-        assertSnapshot(of: view, as: .image(layout: .fixed(width: 120, height: 170)))
+        assertSnapshot(of: view, as: .image)
     }
 
+    @Test
     func testActorPanelView_withPickUpCatType() {
         var state = ActorPanel.State()
         state.cat.type = .pickUp
@@ -134,14 +135,14 @@ final class ActorPanelViewTests: XCTestCase {
         let view = ActorPanelView(store: store)
             .frame(width: ActorPanelView.size.width, height: ActorPanelView.size.height)
 
-        assertSnapshot(of: view, as: .image(layout: .fixed(width: 120, height: 170)))
+        assertSnapshot(of: view, as: .image)
     }
 
+    @Test
     func testActorPanelView_withHasTimerCatType() {
         var state = ActorPanel.State()
         state.cat.type = .hasTimer
-        state.pomodoroTimer.isTimerRunning = true
-        state.pomodoroTimer.currentTime = 1500 // 25分
+        state.pomodoroTimer.time = .init(startDate: .now, intervalMinute: 25)
 
         let store = Store(initialState: state) {
             ActorPanel()
@@ -154,14 +155,15 @@ final class ActorPanelViewTests: XCTestCase {
         let view = ActorPanelView(store: store)
             .frame(width: ActorPanelView.size.width, height: ActorPanelView.size.height)
 
-        assertSnapshot(of: view, as: .image(layout: .fixed(width: 120, height: 170)))
+        assertSnapshot(of: view, as: .image)
     }
 
+    @Test
     func testActorPanelView_withCompleteTimerCatType() {
         var state = ActorPanel.State()
         state.cat.type = .completeTimer
         state.pomodoroTimer.isComplete = true
-        state.pomodoroTimer.currentTime = 0
+        state.pomodoroTimer.time = .init(startDate: .now, intervalMinute: 25)
 
         let store = Store(initialState: state) {
             ActorPanel()
@@ -174,11 +176,12 @@ final class ActorPanelViewTests: XCTestCase {
         let view = ActorPanelView(store: store)
             .frame(width: ActorPanelView.size.width, height: ActorPanelView.size.height)
 
-        assertSnapshot(of: view, as: .image(layout: .fixed(width: 120, height: 170)))
+        assertSnapshot(of: view, as: .image)
     }
 
     // MARK: - 複数言語の入力ソーステスト
 
+    @Test
     func testActorPanelView_withVariousEuropeanInputSources() {
         let inputSources: [InputSource] = [.french, .german, .spanish, .italian, .russian]
 
@@ -196,12 +199,13 @@ final class ActorPanelViewTests: XCTestCase {
 
             assertSnapshot(
                 of: view,
-                as: .image(layout: .fixed(width: 120, height: 170)),
+                as: .image,
                 named: "with\(String(describing: inputSource).capitalized)"
             )
         }
     }
 
+    @Test
     func testActorPanelView_withVariousAsianInputSources() {
         let inputSources: [InputSource] = [.thai, .vietnamese, .arabic, .hebrew]
 
@@ -219,7 +223,7 @@ final class ActorPanelViewTests: XCTestCase {
 
             assertSnapshot(
                 of: view,
-                as: .image(layout: .fixed(width: 120, height: 170)),
+                as: .image,
                 named: "with\(String(describing: inputSource).capitalized)"
             )
         }
