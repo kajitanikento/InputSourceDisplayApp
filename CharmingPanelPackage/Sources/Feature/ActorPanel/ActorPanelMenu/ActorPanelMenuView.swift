@@ -82,6 +82,13 @@ struct ActorPanelMenuView: View {
                             intervalMinute: interval,
                             backgroundColor: .orange
                         )
+                        .contextMenu {
+                            Button(role: .destructive) {
+                                store.send(.onDeleteTimerHistory(intervalMinute: interval))
+                            } label: {
+                                Label("削除", systemImage: "trash")
+                            }
+                        }
                     }
                 }
                 .padding(.horizontal, 16)
